@@ -15,13 +15,12 @@ export default function Navbar({ theme, onToggleTheme, onOpenModal }) {
           <span className="brand-title">NWIS</span>
         </a>
 
-        {/* Navigation Links matching Streamlined Sections */}
+        {/* Navigation Links */}
         <nav>
           <ul className="nav-links">
+            <li><a href="#overview" className="nav-link">Platform</a></li>
             <li><a href="#features" className="nav-link">Capabilities</a></li>
             <li><a href="#telemetry" className="nav-link">Live Telemetry</a></li>
-            <li><a href="#assistant" className="nav-link">Intelligence</a></li>
-            <li><a href="#overview" className="nav-link">Platform</a></li>
           </ul>
         </nav>
 

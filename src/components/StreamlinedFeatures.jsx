@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Compass, Database, Activity, ShieldAlert, ArrowRight, Play, Pause, FileText, Send } from 'lucide-react';
+import { Compass, Database, Activity, ShieldAlert, ArrowRight, Play, Pause, FileText } from 'lucide-react';
 
 export default function StreamlinedFeatures({ onOpenModal }) {
   // Telemetry state for interactive demo
   const [depth, setDepth] = useState(1842);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [assistantQuery, setAssistantQuery] = useState("");
 
   useEffect(() => {
     let interval = null;
@@ -95,7 +94,7 @@ export default function StreamlinedFeatures({ onOpenModal }) {
       </section>
 
       {/* 2. Compact Interactive Telemetry & Evidence HUD */}
-      <section id="telemetry" className="streamlined-section" style={{ paddingTop: 20 }}>
+      <section id="telemetry" className="streamlined-section" style={{ paddingTop: 20, paddingBottom: 80 }}>
         <div className="container">
           <div className="compact-hud-box">
             <div className="compact-hud-top">
@@ -161,68 +160,6 @@ export default function StreamlinedFeatures({ onOpenModal }) {
               >
                 View Full DDR Report
               </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 3. Ask NWIS Quick Query Interface */}
-      <section id="assistant" className="streamlined-section" style={{ paddingTop: 20, paddingBottom: 70 }}>
-        <div className="container">
-          <div className="compact-ask-box">
-            <div className="ask-header-row">
-              <div>
-                <h3 className="ask-title">Ask NWIS Drilling Intelligence</h3>
-                <p className="ask-subtitle">Query historical offset well logs, formations, and drilling incidents in natural language.</p>
-              </div>
-            </div>
-
-            <form 
-              className="ask-input-row"
-              onSubmit={(e) => {
-                e.preventDefault();
-                onOpenModal({
-                  title: "NWIS Drilling Intelligence Assistant",
-                  subtitle: `Query: "${assistantQuery || "Which offset wells had mud losses near 2,500m?"}"`,
-                  content: "Searching 1,420 Daily Drilling Reports and Volve Field formation logs. Found 3 matching offset well incidents with verified DDR citations."
-                });
-              }}
-            >
-              <input
-                type="text"
-                placeholder="E.g. Which offset wells experienced lost circulation between 2,200m and 2,500m?"
-                value={assistantQuery}
-                onChange={(e) => setAssistantQuery(e.target.value)}
-                className="ask-input"
-              />
-              <button type="submit" className="btn btn-ask-submit">
-                <Send size={15} />
-                <span>Ask NWIS</span>
-              </button>
-            </form>
-
-            <div className="prompt-chips-row">
-              <span className="chips-label">SUGGESTIONS:</span>
-              {[
-                "Which offset wells had lost circulation near 2,500m?",
-                "Why is Candidate B ranked highest?",
-                "What is the expected pore pressure in Forties Sand?"
-              ].map((sug, i) => (
-                <button
-                  key={i}
-                  className="prompt-chip"
-                  onClick={() => {
-                    setAssistantQuery(sug);
-                    onOpenModal({
-                      title: "NWIS Query Result",
-                      subtitle: sug,
-                      content: "Context: Active exploration block in Volve Field. Retrieved 3 direct DDR citations and 2 directional survey analogues."
-                    });
-                  }}
-                >
-                  {sug}
-                </button>
-              ))}
             </div>
           </div>
         </div>
