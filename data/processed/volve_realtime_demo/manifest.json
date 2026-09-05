@@ -1,0 +1,105 @@
+[
+  {
+    "well_name": "15/9-F-5",
+    "wellbore_id": "15/9-F-5 - Main Wellbore",
+    "witsml_log_name": "Real Time SLB & Geoservices data - 8.5in. Section - MD Log",
+    "source_file": "D:\\Downloads\\dataset\\Well_Realtime\\Norway-StatoilHydro-15_$47$_9-F-5\\1\\log\\2\\1\\1\\00001.xml",
+    "samples": 1000,
+    "start_time": "",
+    "end_time": "",
+    "start_depth": "2825.191",
+    "end_depth": "2896.514",
+    "depth_drilled_in_window": 71.32300000000032,
+    "available_curves": [
+      "DEPTH",
+      "ROP",
+      "WOB",
+      "RPM",
+      "TORQUE",
+      "PRESSURE",
+      "HOOKLOAD",
+      "FLOW"
+    ],
+    "missing_curves": [
+      "TIME"
+    ],
+    "file_path": "data\\processed\\volve_realtime_demo\\15_9_F_5___Main_Wellbore.csv"
+  },
+  {
+    "well_name": "15/9-F-1",
+    "wellbore_id": "15/9-F-1 - Main Wellbore",
+    "witsml_log_name": "36in. Section. Combined SLB/Geoservices RT-Data - Time Log",
+    "source_file": "D:\\Downloads\\dataset\\Well_Realtime\\Norway-NA-15_$47$_9-F-1\\1\\log\\1\\2\\1\\00001.xml",
+    "samples": 1000,
+    "start_time": "2007-12-01T07:04:25.997Z",
+    "end_time": "2007-12-01T08:23:24.000Z",
+    "start_depth": "1.01999999679079",
+    "end_depth": "1.01999999679079",
+    "depth_drilled_in_window": 0.0,
+    "available_curves": [
+      "TIME",
+      "DEPTH",
+      "ROP",
+      "WOB",
+      "RPM",
+      "TORQUE",
+      "PRESSURE",
+      "HOOKLOAD",
+      "FLOW"
+    ],
+    "missing_curves": [],
+    "file_path": "data\\processed\\volve_realtime_demo\\15_9_F_1___Main_Wellbore.csv"
+  },
+  {
+    "well_name": "15/9-F-7",
+    "wellbore_id": "15/9-F-7 - Main Wellbore",
+    "witsml_log_name": "Real Time MWD/LWD Mudlog Data - 17.5 in. section - MD Log",
+    "source_file": "D:\\Downloads\\dataset\\Well_Realtime\\Norway-Statoil-15_$47$_9-F-7\\1\\log\\2\\2\\1\\00001.xml",
+    "samples": 1000,
+    "start_time": "",
+    "end_time": "",
+    "start_depth": "0",
+    "end_depth": "139.824",
+    "depth_drilled_in_window": 139.824,
+    "available_curves": [
+      "DEPTH",
+      "ROP",
+      "WOB",
+      "RPM",
+      "TORQUE",
+      "PRESSURE",
+      "HOOKLOAD",
+      "FLOW"
+    ],
+    "missing_curves": [
+      "TIME"
+    ],
+    "file_path": "data\\processed\\volve_realtime_demo\\15_9_F_7___Main_Wellbore.csv"
+  },
+  {
+    "well_name": "15/9-F-4",
+    "wellbore_id": "15/9-F-4 - Main Wellbore",
+    "witsml_log_name": "Real Time MWD/LWD Mudlog Data - 8.5 in. section - MD Log",
+    "source_file": "D:\\Downloads\\dataset\\Well_Realtime\\Norway-StatoilHydro-15_$47$_9-F-4\\2\\log\\2\\5\\1\\00001.xml",
+    "samples": 1000,
+    "start_time": "",
+    "end_time": "",
+    "start_depth": "2579.913",
+    "end_depth": "2718.081",
+    "depth_drilled_in_window": 138.16800000000012,
+    "available_curves": [
+      "DEPTH",
+      "ROP",
+      "WOB",
+      "RPM",
+      "FLOW"
+    ],
+    "missing_curves": [
+      "TIME",
+      "TORQUE",
+      "PRESSURE",
+      "HOOKLOAD"
+    ],
+    "file_path": "data\\processed\\volve_realtime_demo\\15_9_F_4___Main_Wellbore.csv"
+  }
+]
