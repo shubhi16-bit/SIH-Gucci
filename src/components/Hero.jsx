@@ -122,17 +122,6 @@ export default function Hero({ onOpenModal }) {
             >
               Log in
             </button>
-
-            <button 
-              className="btn btn-hero-glass"
-              onClick={() => onOpenModal({
-                title: "Request Access to NWIS",
-                subtitle: "Smart India Hackathon 2026 - Problem SIH26121",
-                content: "Submit your team or company credentials for instant evaluation access to the Volve Field and BSEE datasets."
-              })}
-            >
-              Request access
-            </button>
           </div>
         </div>
       </div>

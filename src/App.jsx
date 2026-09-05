@@ -6,22 +6,12 @@ import ActionModal from './components/ActionModal';
 import Footer from './components/Footer';
 
 export default function App() {
-  // Theme state: defaults to dark matching User's preferred black theme
-  const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('nwis-theme') || 'dark';
-  });
-
   // Modal state for interactive clickable buttons
   const [modalData, setModalData] = useState(null);
 
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('nwis-theme', theme);
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
-  };
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }, []);
 
   const handleOpenModal = (data) => {
     setModalData(data);
@@ -34,11 +24,7 @@ export default function App() {
   return (
     <div className="app-wrapper">
       {/* Top Navbar */}
-      <Navbar 
-        theme={theme} 
-        onToggleTheme={toggleTheme} 
-        onOpenModal={handleOpenModal} 
-      />
+      <Navbar onOpenModal={handleOpenModal} />
 
       {/* Hero Section: Unobstructed, buttons and video have 100% clarity */}
       <Hero onOpenModal={handleOpenModal} />

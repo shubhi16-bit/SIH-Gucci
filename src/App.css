@@ -36,11 +36,6 @@
   transition: all 0.3s ease;
 }
 
-[data-theme="light"] .navbar {
-  background: rgba(14, 15, 18, 0.88);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-}
-
 .nav-content {
   display: flex;
   align-items: center;
@@ -310,17 +305,10 @@
    ========================================================================== */
 .hero-scroll-fade-transition {
   width: 100%;
-  height: 160px;
+  height: 24px;
   position: relative;
   z-index: 2;
-  margin-top: -1px;
-  /* Pure continuous black in Dark Mode */
   background: #000000;
-}
-
-[data-theme="light"] .hero-scroll-fade-transition {
-  /* In Light Mode: Smooth gradual descent from pure black into light background */
-  background: linear-gradient(180deg, #000000 0%, #16171e 20%, #484b59 50%, #959ba9 75%, #F5F6F8 100%);
 }
 
 /* ==========================================================================
@@ -446,236 +434,70 @@
   gap: 12px;
 }
 
-/* Compact WITSML Telemetry HUD */
-.compact-hud-box {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-card);
-  border-radius: 20px;
-  padding: 34px;
-  box-shadow: var(--shadow-md);
-}
-
-.compact-hud-top {
+/* Lifecycle 5-Stage Ribbon */
+.lifecycle-chain-bar {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: center;
   flex-wrap: wrap;
-  gap: 16px;
-  margin-bottom: 26px;
-}
-
-.compact-hud-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  display: flex;
-  align-items: center;
-}
-
-.compact-badge {
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  padding: 4px 10px;
-  border-radius: 6px;
-  background: rgba(143, 124, 58, 0.16);
-  color: #C0AA8A;
-  border: 1px solid rgba(143, 124, 58, 0.3);
-  margin-left: 10px;
-}
-
-.compact-hud-desc {
-  font-size: 0.88rem;
-  color: var(--text-secondary);
-  margin-top: 4px;
-}
-
-.btn-hud-play {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
-  border-radius: 10px;
-  font-weight: 600;
-  font-size: 0.88rem;
-  background: #8F7C3A;
-  color: #FFFFFF;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-hud-play:hover {
-  background: #A38E45;
-  transform: translateY(-1px);
-}
-
-.compact-gauges-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: 16px;
-  margin-bottom: 26px;
-}
-
-.compact-gauge {
-  background: var(--bg-surface-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: 14px;
-  padding: 18px 20px;
-}
-
-.gauge-label {
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
-  margin-bottom: 8px;
-}
-
-.gauge-val {
-  font-size: 1.38rem;
-  font-weight: 800;
-  color: var(--text-primary);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-}
-
-.gauge-unit {
-  font-size: 0.82rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-}
-
-.compact-evidence-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
-  padding: 14px 20px;
-  border-radius: 12px;
-  background: var(--bg-subtle);
-  border: 1px solid var(--border-subtle);
-}
-
-.evidence-text {
-  display: flex;
-  align-items: center;
   gap: 12px;
-  font-size: 0.9rem;
-  color: var(--text-primary);
+  margin: 0 auto 44px;
+  max-width: 1060px;
 }
 
-.btn-evidence-link {
-  font-size: 0.86rem;
-  font-weight: 700;
-  color: #8F7C3A;
-  background: none;
-  border: none;
-  cursor: pointer;
-  text-decoration: underline;
-  transition: opacity 0.2s ease;
-}
-
-.btn-evidence-link:hover {
-  opacity: 0.8;
-}
-
-/* Compact Ask NWIS Command Box */
-.compact-ask-box {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-card);
-  border-radius: 20px;
-  padding: 34px;
-  box-shadow: var(--shadow-md);
-}
-
-.ask-header-row {
-  margin-bottom: 22px;
-}
-
-.ask-title {
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 6px;
-}
-
-.ask-subtitle {
-  font-size: 0.92rem;
-  color: var(--text-secondary);
-}
-
-.ask-input-row {
-  display: flex;
-  gap: 14px;
-  margin-bottom: 20px;
-}
-
-.ask-input {
-  flex-grow: 1;
-  padding: 14px 20px;
-  border-radius: 12px;
-  border: 1px solid var(--border-strong);
-  background: var(--bg-surface-elevated);
-  color: var(--text-primary);
-  font-size: 0.96rem;
-  outline: none;
-  transition: border-color 0.2s ease;
-}
-
-.ask-input:focus {
-  border-color: #8F7C3A;
-}
-
-.btn-ask-submit {
+.lifecycle-chip {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 0 26px;
-  border-radius: 12px;
-  background: #8F7C3A;
-  color: #FFFFFF;
-  font-weight: 700;
-  font-size: 0.92rem;
-  border: none;
-  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 24px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-card);
   transition: all 0.2s ease;
 }
 
-.btn-ask-submit:hover {
-  background: #A38E45;
-  transform: translateY(-1px);
+.lifecycle-chip:hover {
+  border-color: rgba(143, 124, 58, 0.5);
+  background: var(--bg-surface-elevated);
 }
 
-.prompt-chips-row {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.chips-label {
-  font-size: 0.74rem;
+.chip-num {
+  font-size: 0.72rem;
   font-weight: 800;
-  letter-spacing: 0.08em;
+  color: #8F7C3A;
+  letter-spacing: 0.06em;
+}
+
+.chip-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.chip-q {
+  font-size: 0.78rem;
   color: var(--text-muted);
 }
 
-.prompt-chip {
-  font-size: 0.82rem;
-  font-weight: 600;
-  padding: 7px 16px;
-  border-radius: 20px;
-  background: var(--bg-surface-elevated);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s ease;
+.lifecycle-arrow {
+  color: var(--text-muted);
+  opacity: 0.6;
 }
 
-.prompt-chip:hover {
-  border-color: #8F7C3A;
-  color: var(--text-primary);
+/* Triad Card Pill Highlight */
+.triad-pill-highlight {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(143, 124, 58, 0.12);
+  border: 1px solid rgba(143, 124, 58, 0.25);
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #C0AA8A;
+  margin-bottom: 22px;
+  width: fit-content;
 }
 
 /* Button Defaults */
@@ -770,11 +592,6 @@
   margin-top: auto;
   position: relative;
   z-index: 2;
-}
-
-[data-theme="light"] .footer {
-  background: #FFFFFF;
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .footer-grid {

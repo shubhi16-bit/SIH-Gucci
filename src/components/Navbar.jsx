@@ -1,7 +1,6 @@
 import React from 'react';
-import { Sun, Moon } from 'lucide-react';
 
-export default function Navbar({ theme, onToggleTheme, onOpenModal }) {
+export default function Navbar({ onOpenModal }) {
   return (
     <header className="navbar">
       <div className="container nav-content">
@@ -19,22 +18,13 @@ export default function Navbar({ theme, onToggleTheme, onOpenModal }) {
         <nav>
           <ul className="nav-links">
             <li><a href="#overview" className="nav-link">Platform</a></li>
-            <li><a href="#features" className="nav-link">Capabilities</a></li>
-            <li><a href="#telemetry" className="nav-link">Live Telemetry</a></li>
+            <li><a href="#workflow" className="nav-link">Lifecycle</a></li>
+            <li><a href="#phases" className="nav-link">Core Phases</a></li>
           </ul>
         </nav>
 
-        {/* Actions: Theme Toggle & Log in */}
+        {/* Actions: Log in */}
         <div className="nav-actions">
-          <button 
-            className="theme-toggle-btn" 
-            onClick={onToggleTheme} 
-            title={theme === 'dark' ? "Switch to Light Mode" : "Switch to Dark Mode"}
-            aria-label="Toggle theme"
-          >
-            {theme === 'dark' ? <Sun size={18} color="#E1D3A9" /> : <Moon size={18} color="#FAF7F2" />}
-          </button>
-
           <button 
             className="btn-nav-login"
             onClick={() => onOpenModal({
