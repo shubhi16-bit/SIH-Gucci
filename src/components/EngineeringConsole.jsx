@@ -138,7 +138,7 @@ export default function EngineeringConsole({
           <div className="sidebar-footer-card">
             <div className="sfc-title">
               <Activity size={14} color="#8F7C3A" />
-              <span>SIH26121 Sandbox</span>
+              <span>NWIS Engineering Sandbox</span>
             </div>
             <p className="sfc-desc">
               Calibrated against Volve Field 15/9 & BSEE Gulf of Mexico historical records.

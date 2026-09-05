@@ -16,7 +16,6 @@ export default function StreamlinedFeatures({ onOpenModal }) {
         <div className="container">
           {/* Section Header */}
           <div className="streamlined-header">
-            <span className="streamlined-tag">SIH 2026 Problem Statement SIH26121</span>
             <h2 className="streamlined-title">Continuous Decision Support Across the Well Lifecycle</h2>
             <p className="streamlined-sub">
               Turning historical drilling experience and geospatial intelligence into actionable decisions before and during drilling.

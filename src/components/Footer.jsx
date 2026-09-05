@@ -20,7 +20,6 @@ export default function Footer({ onOpenModal }) {
               National Well Intelligence System — Turning historical drilling experience and geospatial telemetry into continuous decision support across the entire well lifecycle.
             </p>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              <span className="provenance-tag">SIH 2026 Problem Statement SIH26121</span>
               <span className="provenance-tag">Volve Field & BSEE Datasets</span>
               <span className="provenance-tag">WITSML 1.4 / 2.0</span>
             </div>
