@@ -55,7 +55,7 @@ export default function StreamlinedFeatures({ onOpenModal }) {
               <span className="triad-num">PHASE 01 / EXPLORATION</span>
               <h3 className="triad-card-title">Candidate Location Ranking</h3>
               <p className="triad-card-desc">
-                Combines surface accessibility (roads, terrain, exclusion zones) and subsurface history to score and rank proposed drilling locations.
+                Combines surface accessibility and subsurface history to score and rank drilling locations.
               </p>
               <div className="triad-pill-highlight">
                 <CheckCircle2 size={13} color="#8F7C3A" />
@@ -82,7 +82,7 @@ export default function StreamlinedFeatures({ onOpenModal }) {
               <span className="triad-num">PHASE 02 / WELL PLANNING</span>
               <h3 className="triad-card-title">Trajectory & Offset Hazards</h3>
               <p className="triad-card-desc">
-                Screens planned well paths against analogue well logs to identify and avoid lost-circulation and stuck-pipe intervals before spudding.
+                Screens planned well paths against analogue well logs to identify and avoid hazard intervals.
               </p>
               <div className="triad-pill-highlight">
                 <CheckCircle2 size={13} color="#8F7C3A" />
@@ -109,7 +109,7 @@ export default function StreamlinedFeatures({ onOpenModal }) {
               <span className="triad-num">PHASE 03 / DRILLING & MEMORY</span>
               <h3 className="triad-card-title">Live Telemetry & Knowledge Loop</h3>
               <p className="triad-card-desc">
-                Replays standardized WITSML sensor streams with depth-synchronized alerts, continuously feeding completed well data back into institutional memory.
+                Replays standardized WITSML sensor streams with depth-synchronized alerts.
               </p>
               <div className="triad-pill-highlight">
                 <CheckCircle2 size={13} color="#8F7C3A" />
