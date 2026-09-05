@@ -1,0 +1,124 @@
+/* --------------------------------------------------------------------------
+   NWIS Color System
+   Pure Seamless Black (#000000 - No Brown) & Architectural Clean Light Mode
+-------------------------------------------------------------------------- */
+
+:root {
+  /* Dark Theme (Default - Pure Seamless Black matching the video exactly) */
+  --bg-app: #000000;
+  --bg-surface: #0E0E12;
+  --bg-surface-elevated: #16161C;
+  --bg-surface-translucent: rgba(0, 0, 0, 0.85);
+  --bg-subtle: #1C1C24;
+
+  --text-primary: #FFFFFF;
+  --text-secondary: #A1A1AA;
+  --text-muted: #71717A;
+  --text-inverse: #000000;
+
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --border-card: rgba(255, 255, 255, 0.1);
+
+  --brand-primary: #8F7C3A;
+  --brand-primary-hover: #A38E45;
+  --brand-secondary: #C0AA8A;
+  --brand-accent: #E5E7EB;
+  --brand-danger: #EF4444;
+
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.6);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.75);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.9);
+
+  /* Continuous pure black with subtle clean graphite tone */
+  --scroll-gradient: #000000;
+}
+
+[data-theme="light"] {
+  /* Light Theme */
+  --bg-app: #F5F6F8;
+  --bg-surface: #FFFFFF;
+  --bg-surface-elevated: #F9FAFB;
+  --bg-surface-translucent: rgba(245, 246, 248, 0.9);
+  --bg-subtle: #E5E7EB;
+  
+  --text-primary: #111827;
+  --text-secondary: #4B5563;
+  --text-muted: #6B7280;
+  --text-inverse: #FFFFFF;
+
+  --border-subtle: rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(0, 0, 0, 0.16);
+  --border-card: rgba(0, 0, 0, 0.08);
+
+  --brand-primary: #8F7C3A;
+  --brand-primary-hover: #75652E;
+  --brand-secondary: #A38E45;
+  --brand-accent: #6B7280;
+  --brand-danger: #DC2626;
+
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 16px 36px rgba(0, 0, 0, 0.1);
+
+  --scroll-gradient: #F5F6F8;
+}
+
+/* Global Reset & Base */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg-app);
+  color: var(--text-primary);
+  line-height: 1.6;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
+  position: relative;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  background: none;
+}
+
+input, select, textarea {
+  font-family: inherit;
+}
+
+/* Custom Sleek Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-app);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--brand-primary);
+}
