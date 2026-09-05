@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 
-export default function Hero({ onOpenModal }) {
+export default function Hero({ onOpenModal, isLoggedIn, onOpenLogin, onOpenProjects }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const [videoFaded, setVideoFaded] = useState(false);
@@ -112,16 +112,21 @@ export default function Hero({ onOpenModal }) {
           </p>
 
           <div className="hero-actions-row">
-            <button 
-              className="btn btn-hero-solid"
-              onClick={() => onOpenModal({
-                title: "Log In to NWIS Console",
-                subtitle: "Unified Drilling Decision Support System",
-                content: "Sign in to access exploration prospects, offset well correlation graphs, and live telemetry feeds."
-              })}
-            >
-              Log in
-            </button>
+            {isLoggedIn ? (
+              <button 
+                className="btn btn-hero-solid"
+                onClick={onOpenProjects}
+              >
+                Go to Projects
+              </button>
+            ) : (
+              <button 
+                className="btn btn-hero-solid"
+                onClick={onOpenLogin}
+              >
+                Log in
+              </button>
+            )}
           </div>
         </div>
       </div>

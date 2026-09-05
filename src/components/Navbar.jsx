@@ -1,6 +1,7 @@
 import React from 'react';
+import { User, LogOut, FolderKanban } from 'lucide-react';
 
-export default function Navbar({ onOpenModal }) {
+export default function Navbar({ isLoggedIn, user, onOpenLogin, onOpenProjects, onLogout }) {
   return (
     <header className="navbar">
       <div className="container nav-content">
@@ -23,18 +24,40 @@ export default function Navbar({ onOpenModal }) {
           </ul>
         </nav>
 
-        {/* Actions: Log in */}
+        {/* Actions: Log in / User Session */}
         <div className="nav-actions">
-          <button 
-            className="btn-nav-login"
-            onClick={() => onOpenModal({
-              title: "Log In to NWIS Console",
-              subtitle: "Unified Drilling Decision Support System",
-              content: "Sign in with your engineer credentials to access active well trajectories, WITSML telemetry, and offset well databases."
-            })}
-          >
-            Log in
-          </button>
+          {isLoggedIn ? (
+            <div className="nav-user-session">
+              <button 
+                className="btn-nav-projects"
+                onClick={onOpenProjects}
+                title="View Well Projects"
+              >
+                <FolderKanban size={15} color="#8F7C3A" />
+                <span>My Projects</span>
+              </button>
+
+              <div className="nav-user-pill">
+                <User size={14} color="#8F7C3A" />
+                <span>Engineer {user ? user.username : '123'}</span>
+              </div>
+
+              <button 
+                className="btn-nav-logout"
+                onClick={onLogout}
+                title="Sign out"
+              >
+                <LogOut size={15} />
+              </button>
+            </div>
+          ) : (
+            <button 
+              className="btn-nav-login"
+              onClick={onOpenLogin}
+            >
+              Log in
+            </button>
+          )}
         </div>
       </div>
     </header>

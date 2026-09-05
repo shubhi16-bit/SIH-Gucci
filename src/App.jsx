@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import StreamlinedFeatures from './components/StreamlinedFeatures';
+import LoginModal from './components/LoginModal';
 import ProjectHub from './components/ProjectHub';
 import EngineeringConsole from './components/EngineeringConsole';
 import ActionModal from './components/ActionModal';
@@ -11,6 +12,11 @@ export default function App() {
   // Navigation View: 'landing' | 'project_hub' | 'console'
   const [view, setView] = useState('landing');
   
+  // Authentication State
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
   // Current active project
   const [currentProject, setCurrentProject] = useState({
     id: 'raj-a',
@@ -37,6 +43,27 @@ export default function App() {
   }, []);
 
   const handleOpenLogin = () => {
+    if (isLoggedIn) {
+      setView('project_hub');
+    } else {
+      setShowLoginModal(true);
+    }
+  };
+
+  const handleLoginSuccess = (userData) => {
+    setIsLoggedIn(true);
+    setUser(userData);
+    setShowLoginModal(false);
+    setView('project_hub');
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setUser(null);
+    setView('landing');
+  };
+
+  const handleOpenProjects = () => {
     setView('project_hub');
   };
 
@@ -71,24 +98,46 @@ export default function App() {
           onSwitchProject={() => setView('project_hub')}
           onExit={() => setView('landing')}
           onOpenModal={handleOpenModal}
+          user={user}
         />
       ) : (
         /* Minimal Landing Page */
         <>
-          <Navbar onOpenModal={handleOpenLogin} />
-          <Hero onOpenModal={handleOpenLogin} />
+          <Navbar 
+            isLoggedIn={isLoggedIn}
+            user={user}
+            onOpenLogin={handleOpenLogin}
+            onOpenProjects={handleOpenProjects}
+            onLogout={handleLogout}
+          />
+          <Hero 
+            isLoggedIn={isLoggedIn}
+            onOpenLogin={handleOpenLogin}
+            onOpenProjects={handleOpenProjects}
+            onOpenModal={handleOpenModal} 
+          />
           <div className="hero-scroll-fade-transition" />
           <StreamlinedFeatures onOpenModal={handleOpenModal} />
           <Footer onOpenModal={handleOpenModal} />
         </>
       )}
 
+      {/* Engineer Login Modal */}
+      {showLoginModal && (
+        <LoginModal
+          onLoginSuccess={handleLoginSuccess}
+          onClose={() => setShowLoginModal(false)}
+        />
+      )}
+
       {/* Project Hub Modal / Wizard */}
       {view === 'project_hub' && (
         <ProjectHub
+          user={user}
           onSelectProject={handleSelectProject}
           onCreateProject={handleCreateProject}
           onClose={() => setView('landing')}
+          onLogout={handleLogout}
         />
       )}
 
