@@ -1,9 +1,26 @@
 import React, { useState } from 'react';
-import { FolderPlus, FolderKanban, ArrowRight, X, Compass, Activity, MapPin, CheckCircle2, Database } from 'lucide-react';
+import { 
+  FolderPlus, 
+  FolderKanban, 
+  ArrowRight, 
+  X, 
+  Compass, 
+  ChevronDown, 
+  ChevronUp, 
+  LogOut, 
+  CheckCircle2, 
+  MapPin, 
+  Layers, 
+  Activity, 
+  Database 
+} from 'lucide-react';
 
-export default function ProjectHub({ onSelectProject, onCreateProject, onClose }) {
+export default function ProjectHub({ onSelectProject, onCreateProject, onClose, user, onLogout }) {
   const [activeTab, setActiveTab] = useState('existing'); // 'existing' | 'create'
   
+  // Only titles shown initially; details expand when clicked on title!
+  const [expandedProjectId, setExpandedProjectId] = useState(null);
+
   // Create Project Form State
   const [area, setArea] = useState('Rajasthan Block A');
   const [formation, setFormation] = useState('Forties Sandstone');
@@ -24,7 +41,7 @@ export default function ProjectHub({ onSelectProject, onCreateProject, onClose }
       offsetWells: 5,
       alerts: 1,
       lastActive: '10 mins ago',
-      desc: 'Pre-spud planning with 5 offset wells correlated. Candidate B selected for optimal trajectory feasibility.'
+      desc: 'Pre-spud planning with 5 offset wells correlated. Candidate B selected for optimal trajectory feasibility and minimum geological fault hazards.'
     },
     {
       id: 'volve-15',
@@ -39,7 +56,7 @@ export default function ProjectHub({ onSelectProject, onCreateProject, onClose }
       offsetWells: 7,
       alerts: 2,
       lastActive: 'Active Stream',
-      desc: 'Real-time WITSML telemetry replay calibrated with DDR #43 mud-loss incident records.'
+      desc: 'Real-time WITSML telemetry replay calibrated with DDR #43 mud-loss incident records and high-frequency sensor streams.'
     },
     {
       id: 'kg-deep',
@@ -54,9 +71,13 @@ export default function ProjectHub({ onSelectProject, onCreateProject, onClose }
       offsetWells: 12,
       alerts: 0,
       lastActive: '2 days ago',
-      desc: 'Regional multi-factor suitability scoring assessing seabed terrain, slope stability, and offset pressure regimes.'
+      desc: 'Regional multi-factor suitability scoring assessing seabed terrain, bathymetric slope stability, and offset pore pressure regimes.'
     }
   ];
+
+  const toggleExpand = (id) => {
+    setExpandedProjectId(prev => prev === id ? null : id);
+  };
 
   const handleCreateSubmit = (e) => {
     e.preventDefault();
@@ -84,15 +105,34 @@ export default function ProjectHub({ onSelectProject, onCreateProject, onClose }
         {/* Top Header */}
         <div className="hub-header">
           <div>
-            <span className="hub-tag">ENGINEER WORKSPACE PORTAL</span>
-            <h2 className="hub-title">Welcome, Lead Drilling Engineer</h2>
+            <div className="hub-tag-row">
+              <span className="hub-tag">ENGINEER WORKSPACE PORTAL</span>
+              {user && (
+                <span className="hub-auth-badge">
+                  <CheckCircle2 size={13} color="#10B981" />
+                  <span>Authenticated as Engineer {user.username}</span>
+                </span>
+              )}
+            </div>
+            <h2 className="hub-title">
+              {user ? `Welcome, ${user.name}` : 'Welcome, Lead Drilling Engineer'}
+            </h2>
             <p className="hub-sub">
-              Access active drilling intelligence projects or initialize a new well planning workflow.
+              Select an existing well project to view details and launch the dashboard, or create a new project.
             </p>
           </div>
-          <button className="hub-close-btn" onClick={onClose} aria-label="Close">
-            <X size={20} />
-          </button>
+
+          <div className="hub-header-actions">
+            {onLogout && (
+              <button className="btn-hub-logout" onClick={onLogout} title="Log out">
+                <LogOut size={16} />
+                <span>Log out</span>
+              </button>
+            )}
+            <button className="hub-close-btn" onClick={onClose} aria-label="Close">
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         {/* Tab Switcher */}
@@ -102,7 +142,7 @@ export default function ProjectHub({ onSelectProject, onCreateProject, onClose }
             onClick={() => setActiveTab('existing')}
           >
             <FolderKanban size={17} />
-            <span>Select Existing Project ({existingProjects.length})</span>
+            <span>Existing Projects ({existingProjects.length})</span>
           </button>
 
           <button 
@@ -114,50 +154,120 @@ export default function ProjectHub({ onSelectProject, onCreateProject, onClose }
           </button>
         </div>
 
-        {/* Tab 1: Select Existing Project */}
+        {/* Tab 1: Existing Projects (Title only by default, details expand on click) */}
         {activeTab === 'existing' && (
           <div className="hub-existing-wrap">
-            <div className="hub-projects-list">
-              {existingProjects.map((p) => (
-                <div key={p.id} className="hub-project-card" onClick={() => onSelectProject(p)}>
-                  <div className="pcard-header">
-                    <div>
-                      <div className="pcard-title-row">
-                        <h3 className="pcard-name">{p.name}</h3>
-                        <span className="pcard-status-pill" style={{ borderColor: p.statusColor, color: p.statusColor }}>
+            <div className="hub-compact-list">
+              {existingProjects.map((p) => {
+                const isExpanded = expandedProjectId === p.id;
+                return (
+                  <div 
+                    key={p.id} 
+                    className={`hub-accordion-item ${isExpanded ? 'is-expanded' : ''}`}
+                  >
+                    {/* Compact Title Row — Clickable */}
+                    <div 
+                      className="accordion-title-bar"
+                      onClick={() => toggleExpand(p.id)}
+                      role="button"
+                      tabIndex={0}
+                      aria-expanded={isExpanded}
+                    >
+                      <div className="accordion-title-left">
+                        <div className="accordion-folder-icon">
+                          <FolderKanban size={18} color="#8F7C3A" />
+                        </div>
+                        <div>
+                          <h3 className="accordion-project-name">{p.name}</h3>
+                          <span className="accordion-basin-sub">{p.basin}</span>
+                        </div>
+                      </div>
+
+                      <div className="accordion-title-right">
+                        <span 
+                          className="accordion-status-pill"
+                          style={{ borderColor: p.statusColor, color: p.statusColor }}
+                        >
                           {p.status}
                         </span>
+                        <div className="accordion-toggle-indicator">
+                          {isExpanded ? (
+                            <>
+                              <span className="toggle-text">Hide Details</span>
+                              <ChevronUp size={16} />
+                            </>
+                          ) : (
+                            <>
+                              <span className="toggle-text">Click for Details</span>
+                              <ChevronDown size={16} />
+                            </>
+                          )}
+                        </div>
                       </div>
-                      <div className="pcard-basin">{p.basin}</div>
                     </div>
-                    <button className="btn-pcard-open" onClick={(e) => { e.stopPropagation(); onSelectProject(p); }}>
-                      <span>Open Project</span>
-                      <ArrowRight size={14} />
-                    </button>
+
+                    {/* Expandable Details Container */}
+                    {isExpanded && (
+                      <div className="accordion-details-panel">
+                        <p className="accordion-desc">{p.desc}</p>
+
+                        <div className="accordion-stats-grid">
+                          <div className="accordion-stat">
+                            <span className="stat-label">SELECTED / ACTIVE CANDIDATE</span>
+                            <span className="stat-val">{p.candidate}</span>
+                          </div>
+                          <div className="accordion-stat">
+                            <span className="stat-label">TARGET TOTAL DEPTH</span>
+                            <span className="stat-val">{p.depth}</span>
+                          </div>
+                          <div className="accordion-stat">
+                            <span className="stat-label">TARGET FORMATION</span>
+                            <span className="stat-val">{p.formation}</span>
+                          </div>
+                          <div className="accordion-stat">
+                            <span className="stat-label">CORRELATED OFFSET WELLS</span>
+                            <span className="stat-val" style={{ color: '#8F7C3A' }}>{p.offsetWells} Wells</span>
+                          </div>
+                        </div>
+
+                        <div className="accordion-action-footer">
+                          <div className="accordion-meta-hint">
+                            <span>Last accessed: {p.lastActive} &bull; Suitability Score: <strong>{p.score}%</strong></span>
+                          </div>
+                          <button 
+                            className="btn btn-primary btn-open-dashboard"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onSelectProject(p);
+                            }}
+                          >
+                            <span>Open Project Dashboard</span>
+                            <ArrowRight size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
+                );
+              })}
 
-                  <p className="pcard-desc">{p.desc}</p>
-
-                  <div className="pcard-stats-grid">
-                    <div className="pcard-stat">
-                      <span className="stat-label">SELECTED / ACTIVE</span>
-                      <span className="stat-val">{p.candidate}</span>
-                    </div>
-                    <div className="pcard-stat">
-                      <span className="stat-label">TARGET DEPTH</span>
-                      <span className="stat-val">{p.depth}</span>
-                    </div>
-                    <div className="pcard-stat">
-                      <span className="stat-label">TARGET FORMATION</span>
-                      <span className="stat-val">{p.formation}</span>
-                    </div>
-                    <div className="pcard-stat">
-                      <span className="stat-label">OFFSET WELLS</span>
-                      <span className="stat-val" style={{ color: '#8F7C3A' }}>{p.offsetWells} Wells</span>
-                    </div>
+              {/* Quick Card to Create New Project directly from list */}
+              <div 
+                className="hub-create-shortcut-card"
+                onClick={() => setActiveTab('create')}
+              >
+                <div className="create-shortcut-left">
+                  <FolderPlus size={20} color="#8F7C3A" />
+                  <div>
+                    <h4 className="create-shortcut-title">+ Create New Well Project</h4>
+                    <span className="create-shortcut-sub">Initialize target coordinates, formation, and planning constraints</span>
                   </div>
                 </div>
-              ))}
+                <div className="create-shortcut-btn">
+                  <span>Start New Project</span>
+                  <ArrowRight size={14} />
+                </div>
+              </div>
             </div>
           </div>
         )}
