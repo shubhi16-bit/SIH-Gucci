@@ -15,7 +15,7 @@ from backend.similarity import SimilarityEngine
 # CONFIGURATION
 # =========================================================
 
-METADATA_PATH = r"C:\Users\User\Downloads\wellbore_exploration_all.csv"
+METADATA_PATH = r"D:\Downloads\dataset\wellbore_exploration_all.csv"
 EVENTS_PATH = r"data\processed\events.csv"
 
 

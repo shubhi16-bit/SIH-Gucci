@@ -1,0 +1,50 @@
+# Volve Well Metadata Coverage Report
+
+## Summary
+- **Total event-bearing wells:** 26
+- **Total metadata wells:** 28
+- **Successful joins:** 26
+- **Failed joins:** 0
+- **Identifier mismatch count:** 0 (Handled via normalization and parent fallbacks)
+
+## Metadata Availability
+This table shows the coverage for the 26 event-bearing wells.
+
+| Field | Availability | Sources |
+|-------|--------------|---------|
+| Coordinates (lat/lon) | 26/26 | ACTUAL Trajectory, NPD |
+| Total Depth | 26/26 | ACTUAL Trajectory, NPD |
+| TVD | 26/26 | ACTUAL Trajectory, NPD |
+| Max Inclination | 26/26 | ACTUAL Trajectory, NPD |
+| Formation at TD | 4/26 | NPD |
+
+## Detailed Coverage by Well
+
+| Well | Events | Coordinates | TVD | TD | Inclination | Formation | Sources (Lat/TD/Form) |
+|------|--------|-------------|-----|----|-------------|-----------|-----------------------|
+| 15/9-19 A | REAL | REAL | REAL | REAL | REAL | REAL | TRAJECTORY / TRAJECTORY / NPD |
+| 15/9-19 B | REAL | REAL | REAL | REAL | REAL | REAL | TRAJECTORY / TRAJECTORY / NPD |
+| 15/9-19 BT2 | REAL | REAL | REAL | REAL | REAL | MISSING | TRAJECTORY / TRAJECTORY / MISSING |
+| 15/9-19 S | REAL | REAL | REAL | REAL | REAL | REAL | TRAJECTORY / TRAJECTORY / NPD |
+| 15/9-19 ST2 | REAL | REAL | REAL | REAL | REAL | REAL | TRAJECTORY_PARENT / TRAJECTORY_PARENT / NPD_PARENT |
+| 15/9-F-1 | REAL | REAL | REAL | REAL | REAL | MISSING | TRAJECTORY / TRAJECTORY / MISSING |
+| 15/9-F-1 A | REAL | REAL | REAL | REAL | REAL | MISSING | TRAJECTORY / TRAJECTORY / MISSING |
+| 15/9-F-1 B | REAL | REAL | REAL | REAL | REAL | MISSING | TRAJECTORY / TRAJECTORY / MISSING |
+| 15/9-F-1 C | REAL | REAL | REAL | REAL | REAL | MISSING | TRAJECTORY / TRAJECTORY / MISSING |
+| 15/9-F-10 | REAL | REAL | REAL | REAL | REAL | MISSING | TRAJECTORY / TRAJECTORY / MISSING |
+| 15/9-F-11 | REAL | REAL | REAL | REAL | REAL | MISSING | TRAJECTORY / TRAJECTORY / MISSING |
+| 15/9-F-11 A | REAL | REAL | REAL | REAL | REAL | MISSING | TRAJECTORY / TRAJECTORY / MISSING |
+| 15/9-F-11 B | REAL | REAL | REAL | REAL | REAL | MISSING | TRAJECTORY / TRAJECTORY / MISSING |
+| 15/9-F-11 T2 | REAL | REAL | REAL | REAL | REAL | MISSING | TRAJECTORY / TRAJECTORY / MISSING |
+| 15/9-F-12 | REAL | REAL | REAL | REAL | REAL | MISSING | TRAJECTORY / TRAJECTORY / MISSING |
+| 15/9-F-14 | REAL | REAL | REAL | REAL | REAL | MISSING | TRAJECTORY / TRAJECTORY / MISSING |
+| 15/9-F-15 | REAL | REAL | REAL | REAL | REAL | MISSING | TRAJECTORY / TRAJECTORY / MISSING |
+| 15/9-F-15 A | REAL | REAL | REAL | REAL | REAL | MISSING | TRAJECTORY / TRAJECTORY / MISSING |
+| 15/9-F-15 B | REAL | REAL | REAL | REAL | REAL | MISSING | TRAJECTORY / TRAJECTORY / MISSING |
+| 15/9-F-15 C | REAL | REAL | REAL | REAL | REAL | MISSING | TRAJECTORY / TRAJECTORY / MISSING |
+| 15/9-F-15 D | REAL | REAL | REAL | REAL | REAL | MISSING | TRAJECTORY / TRAJECTORY / MISSING |
+| 15/9-F-4 | REAL | REAL | REAL | REAL | REAL | MISSING | TRAJECTORY / TRAJECTORY / MISSING |
+| 15/9-F-5 | REAL | REAL | REAL | REAL | REAL | MISSING | TRAJECTORY / TRAJECTORY / MISSING |
+| 15/9-F-7 | REAL | REAL | REAL | REAL | REAL | MISSING | TRAJECTORY / TRAJECTORY / MISSING |
+| 15/9-F-9 | REAL | REAL | REAL | REAL | REAL | MISSING | TRAJECTORY / TRAJECTORY / MISSING |
+| 15/9-F-9 A | REAL | REAL | REAL | REAL | REAL | MISSING | TRAJECTORY / TRAJECTORY / MISSING |

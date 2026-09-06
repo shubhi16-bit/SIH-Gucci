@@ -121,40 +121,24 @@ class PlanningEngine:
     def score_candidates(self, candidates, request):
         scored = []
         for c in candidates:
-            # Fake/simplified features for the prototype
+            # Genuine spatial feature
             dist = c['closest_dist']
             
-            # Score components (0-100)
-            spacing_score = min(100, (dist / 2000) * 100) # optimal around 2km+
-            target_score = 90 # Constant for now since depth matches
-            trajectory_score = 85 # Assuming vertical well for simplistic exploration prototype
-            historical_risk_score = 75 # Proxy for nearby event density (dummy calculation)
-            
-            # Weights
-            w_spacing = 0.3
-            w_target = 0.3
-            w_traj = 0.2
-            w_risk = 0.2
-            
-            overall = (spacing_score * w_spacing + 
-                       target_score * w_target + 
-                       trajectory_score * w_traj + 
-                       historical_risk_score * w_risk)
+            # Spatial Suitability Score (0-100)
+            # Optimal spacing is >= 2000m for this prototype
+            spatial_suitability = min(100.0, (dist / 2000.0) * 100.0)
             
             c['scores'] = {
-                'overall': round(overall, 1),
-                'spacing': round(spacing_score, 1),
-                'target': round(target_score, 1),
-                'trajectory': round(trajectory_score, 1),
-                'historical_risk': round(historical_risk_score, 1)
+                'spatial_suitability': round(spatial_suitability, 1),
+                'spacing': round(spatial_suitability, 1)
             }
             
             c['positive_factors'] = [
-                f"Excellent distance from existing wells ({int(dist)}m)" if spacing_score > 80 else "Adequate spacing",
+                f"Excellent distance from existing wells ({int(dist)}m)" if spatial_suitability > 80 else "Adequate spacing",
                 "Simple vertical trajectory estimated"
             ]
             c['negative_factors'] = [
-                "Proximity limits expansion" if spacing_score < 50 else None
+                "Proximity limits expansion" if spatial_suitability < 50 else None
             ]
             c['negative_factors'] = [x for x in c['negative_factors'] if x]
             
@@ -166,7 +150,7 @@ class PlanningEngine:
             
             scored.append(c)
             
-        # Rank
-        scored.sort(key=lambda x: x['scores']['overall'], reverse=True)
+        # Rank by honest spatial suitability
+        scored.sort(key=lambda x: x['scores']['spatial_suitability'], reverse=True)
         return scored
 

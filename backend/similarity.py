@@ -42,62 +42,43 @@ class SimilarityEngine:
         ) as file:
 
             reader = csv.DictReader(file)
+            headers = reader.fieldnames
+
+            # Detect if this is the normalized Volve metadata or raw NPD
+            is_normalized = "wellbore_name" in headers
 
             for row in reader:
 
-                # Only use VOLVE wells
-                if row.get(
-                    "wlbField",
-                    ""
-                ).strip().upper() != "VOLVE":
-                    continue
+                if is_normalized:
+                    well = {
+                        "name": row.get("wellbore_name", "").strip(),
+                        "field": row.get("field", "").strip(),
+                        "well_type": row.get("well_type", "").strip(),
+                        "latitude": self._to_float(row.get("latitude")),
+                        "longitude": self._to_float(row.get("longitude")),
+                        "total_depth": self._to_float(row.get("total_depth")),
+                        "tvd": self._to_float(row.get("tvd")),
+                        "max_inclination": self._to_float(row.get("max_inclination")),
+                        "formation_td": row.get("formation_td", "").strip(),
+                        "formation_hc": row.get("formation_hc", "").strip()
+                    }
+                else:
+                    # Only use VOLVE wells from NPD data
+                    if row.get("wlbField", "").strip().upper() != "VOLVE":
+                        continue
 
-                well = {
-                    "name": row.get(
-                        "wlbWellboreName",
-                        ""
-                    ).strip(),
-
-                    "field": row.get(
-                        "wlbField",
-                        ""
-                    ).strip(),
-
-                    "well_type": row.get(
-                        "wlbWellType",
-                        ""
-                    ).strip(),
-
-                    "latitude": self._to_float(
-                        row.get("wlbNsDecDeg")
-                    ),
-
-                    "longitude": self._to_float(
-                        row.get("wlbEwDecDeg")
-                    ),
-
-                    "total_depth": self._to_float(
-                        row.get("wlbTotalDepth")
-                    ),
-
-                    "tvd": self._to_float(
-                        row.get("wlbFinalVerticalDepth")
-                    ),
-
-                    "max_inclination": self._to_float(
-                        row.get("wlbMaxInclation")
-                    ),
-
-                    "formation_td": row.get(
-                        "wlbFormationAtTd",
-                        ""
-                    ).strip(),
-
-                    "formation_hc": row.get(
-                        "wlbFormationWithHc1",
-                        ""
-                    ).strip()
-                }
+                    well = {
+                        "name": row.get("wlbWellboreName", "").strip(),
+                        "field": row.get("wlbField", "").strip(),
+                        "well_type": row.get("wlbWellType", "").strip(),
+                        "latitude": self._to_float(row.get("wlbNsDecDeg")),
+                        "longitude": self._to_float(row.get("wlbEwDecDeg")),
+                        "total_depth": self._to_float(row.get("wlbTotalDepth")),
+                        "tvd": self._to_float(row.get("wlbFinalVerticalDepth")),
+                        "max_inclination": self._to_float(row.get("wlbMaxInclation")),
+                        "formation_td": row.get("wlbFormationAtTd", "").strip(),
+                        "formation_hc": row.get("wlbFormationWithHc1", "").strip()
+                    }
 
                 wells.append(well)
 
@@ -947,12 +928,35 @@ class SimilarityEngine:
     def rank_wells(
         self,
         current,
-        top_k=5
+        top_k=5,
+        exclude_name=None
     ):
+        """
+        Rank historical wells by similarity to `current`.
+
+        Parameters
+        ----------
+        current : dict
+            Query well dict (must have at minimum name, lat/lon or depth fields).
+        top_k : int
+            Number of top wells to return.
+        exclude_name : str, optional
+            If provided, skip any historical well whose name matches this string.
+            Use to prevent a real historical well from appearing in its own results.
+            When None, the target well is NOT automatically excluded — the caller
+            must set exclude_name=current.get('name') to guarantee exclusion.
+        """
 
         rankings = []
 
         for historical in self.wells:
+
+            # Exclude the target well from its own results when requested
+            if (
+                exclude_name is not None
+                and historical.get("name") == exclude_name
+            ):
+                continue
 
             score = self.overall_similarity(
                 current,
