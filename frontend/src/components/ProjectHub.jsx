@@ -1,131 +1,155 @@
 import React, { useState } from 'react';
 import { 
-  FolderPlus, 
-  FolderKanban, 
+  Compass, 
+  Activity, 
+  Plus, 
+  Radio, 
   ArrowRight, 
   X, 
-  Compass, 
-  ChevronDown, 
-  ChevronUp, 
-  LogOut, 
-  CheckCircle2, 
-  MapPin, 
   Layers, 
-  Activity, 
-  Database 
+  LogOut, 
+  FolderKanban, 
+  FileText 
 } from 'lucide-react';
 
 export default function ProjectHub({ onSelectProject, onCreateProject, onClose, user, onLogout }) {
-  const [activeTab, setActiveTab] = useState('existing'); // 'existing' | 'create'
-  
-  // Only titles shown initially; details expand when clicked on title!
-  const [expandedProjectId, setExpandedProjectId] = useState(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
-  // Create Project Form State
+  // Form state for creating a new well project
   const [area, setArea] = useState('Rajasthan Block A');
   const [formation, setFormation] = useState('Forties Sandstone');
   const [depth, setDepth] = useState('3200');
   const [objective, setObjective] = useState('Exploration');
 
-  const existingProjects = [
+  // Real drilling workflow-state projects
+  const workflowProjects = [
     {
-      id: 'raj-a',
+      id: 'kg-basin',
+      name: 'KG Basin D6',
+      field: 'Krishna-Godavari',
+      formation: 'Ravva Sandstone',
+      status: 'DRILLING',
+      statusType: 'active',
+      workflowType: 'Active Well Monitoring',
+      depthDisplay: 'Current: 2,184 m',
+      depth: '2,184 m',
+      targetDepth: '3,450 m',
+      risk: 'HIGH',
+      riskLevel: 'high',
+      offsetWells: '8 Offset Wells',
+      offsetCount: 8,
+      defaultScreen: 'active_well',
+      desc: 'Real-time telemetry stream indicating torque micro-fluctuations matching offset stuck-pipe signatures.'
+    },
+    {
+      id: 'raj-block-a',
       name: 'Rajasthan Block A',
-      basin: 'Barmer Basin / Western Onshore',
-      status: 'Planning Mode',
-      statusColor: '#8F7C3A',
-      candidate: 'Candidate B (Recommended)',
-      score: 89,
-      depth: '3,200 m',
+      field: 'Barmer Basin',
       formation: 'Fatehgarh Sandstone',
-      offsetWells: 5,
-      alerts: 1,
-      lastActive: '10 mins ago',
-      desc: 'Pre-spud planning with 5 offset wells correlated. Candidate B selected for optimal trajectory feasibility and minimum geological fault hazards.'
+      status: 'PLANNING',
+      statusType: 'planning',
+      workflowType: 'New Exploration Area',
+      depthDisplay: 'Target: 3,200 m',
+      depth: '3,200 m',
+      targetDepth: '3,200 m',
+      risk: 'LOW',
+      riskLevel: 'low',
+      offsetWells: '5 Offset Wells',
+      offsetCount: 5,
+      defaultScreen: 'planning',
+      desc: 'Pre-spud planning with 5 offset wells correlated. Candidate B selected for optimal trajectory feasibility.'
     },
     {
-      id: 'volve-15',
-      name: 'Offshore Field 7 (Volve 15/9)',
-      basin: 'North Sea Block 15/9',
-      status: 'Drilling Replay',
-      statusColor: '#10B981',
-      candidate: 'Well 15/9-F-1',
-      score: 94,
-      depth: '1,842 m / 3,400 m',
-      formation: 'Hugin Formation',
-      offsetWells: 7,
-      alerts: 2,
-      lastActive: 'Active Stream',
-      desc: 'Real-time WITSML telemetry replay calibrated with DDR #43 mud-loss incident records and high-frequency sensor streams.'
+      id: 'assam-shelf',
+      name: 'Assam Shelf Block B',
+      field: 'Upper Assam Basin',
+      formation: 'Barail Group',
+      status: 'APPRAISAL',
+      statusType: 'appraisal',
+      workflowType: 'Offset / Historical Analysis',
+      depthDisplay: 'Target: 3,850 m',
+      depth: '3,850 m',
+      targetDepth: '3,850 m',
+      risk: 'MEDIUM',
+      riskLevel: 'medium',
+      offsetWells: '12 Offset Wells',
+      offsetCount: 12,
+      defaultScreen: 'offsets',
+      desc: 'Regional multi-factor suitability scoring assessing fault intersections and offset pressure regimes.'
     },
     {
-      id: 'kg-deep',
-      name: 'KG Basin Deepwater Prospect',
-      basin: 'Krishna-Godavari Offshore',
-      status: 'Exploration Scouting',
-      statusColor: '#6366F1',
-      candidate: 'Candidate KG-01',
-      score: 82,
-      depth: '3,450 m',
-      formation: 'Ravva Formation',
-      offsetWells: 12,
-      alerts: 0,
-      lastActive: '2 days ago',
-      desc: 'Regional multi-factor suitability scoring assessing seabed terrain, bathymetric slope stability, and offset pore pressure regimes.'
+      id: 'volve-replay',
+      name: 'Volve Field 15/9 Replay',
+      field: 'North Sea Block 15/9',
+      formation: 'Hugin / Forties',
+      status: 'HISTORICAL REPLAY',
+      statusType: 'replay',
+      workflowType: 'WITSML Sensor Prototype',
+      depthDisplay: 'Current: 1,842 m',
+      depth: '1,842 m',
+      targetDepth: '3,400 m',
+      risk: 'MEDIUM',
+      riskLevel: 'medium',
+      offsetWells: '7 Offset Wells',
+      offsetCount: 7,
+      defaultScreen: 'active_well',
+      desc: 'Standardized WITSML sensor stream calibrated against Daily Drilling Report #43 mud-loss records.'
     }
   ];
-
-  const toggleExpand = (id) => {
-    setExpandedProjectId(prev => prev === id ? null : id);
-  };
 
   const handleCreateSubmit = (e) => {
     e.preventDefault();
     const newProject = {
       id: `proj-${Date.now()}`,
       name: area,
-      basin: area.includes('Rajasthan') ? 'Barmer Basin' : area.includes('KG') ? 'Krishna-Godavari' : 'Offshore Field',
-      status: 'Planning Mode',
-      statusColor: '#8F7C3A',
-      candidate: 'Candidate B',
-      score: 88,
-      depth: `${depth} m`,
+      field: area.includes('Rajasthan') ? 'Barmer Basin' : area.includes('KG') ? 'Krishna-Godavari' : 'Exploration Block',
       formation: formation,
-      objective: objective,
-      offsetWells: 5,
-      alerts: 1,
-      desc: `Newly initialized well planning project for ${area} targeting ${formation} at ${depth}m.`
+      status: 'PLANNING',
+      statusType: 'planning',
+      workflowType: 'New Exploration Area',
+      depthDisplay: `Target: ${depth} m`,
+      depth: `${depth} m`,
+      targetDepth: `${depth} m`,
+      risk: 'LOW',
+      riskLevel: 'low',
+      offsetWells: '5 Offset Wells',
+      offsetCount: 5,
+      defaultScreen: 'planning',
+      desc: `Newly initialized well planning prospect targeting ${formation} at ${depth}m.`
     };
+    setShowCreateModal(false);
     onCreateProject(newProject);
+  };
+
+  const handleMonitorActiveDirect = () => {
+    // Direct launch into the active drilling well (KG Basin D6)
+    const activeProject = workflowProjects[0];
+    onSelectProject(activeProject, 'active_well');
+  };
+
+  const handleNewPlanningDirect = () => {
+    // Direct launch into the planning workflow
+    const planningProject = workflowProjects[1];
+    onSelectProject(planningProject, 'planning');
   };
 
   return (
     <div className="project-hub-overlay" onClick={onClose}>
-      <div className="project-hub-modal" onClick={e => e.stopPropagation()}>
-        {/* Top Header */}
-        <div className="hub-header">
-          <div>
-            <div className="hub-tag-row">
-              <span className="hub-tag">ENGINEER WORKSPACE PORTAL</span>
-              {user && (
-                <span className="hub-auth-badge">
-                  <CheckCircle2 size={13} color="#10B981" />
-                  <span>Authenticated as Engineer {user.username}</span>
-                </span>
-              )}
-            </div>
-            <h2 className="hub-title">
-              {user ? `Welcome, ${user.name}` : 'Welcome, Lead Drilling Engineer'}
-            </h2>
-            <p className="hub-sub">
-              Select an existing well project to view details and launch the dashboard, or create a new project.
+      <div className="project-hub-modal ertmac-hub-modal" onClick={e => e.stopPropagation()}>
+        {/* Hub Header */}
+        <div className="hub-header ertmac-header">
+          <div className="ertmac-title-block">
+            <span className="ertmac-badge">eRTMAC-NWIS</span>
+            <h1 className="ertmac-main-title">Well Intelligence Workspace</h1>
+            <p className="ertmac-subtext">
+              Plan a new well or monitor an existing drilling operation.
             </p>
           </div>
 
           <div className="hub-header-actions">
             {onLogout && (
               <button className="btn-hub-logout" onClick={onLogout} title="Log out">
-                <LogOut size={16} />
+                <LogOut size={15} />
                 <span>Log out</span>
               </button>
             )}
@@ -135,230 +159,188 @@ export default function ProjectHub({ onSelectProject, onCreateProject, onClose, 
           </div>
         </div>
 
-        {/* Tab Switcher */}
-        <div className="hub-tab-bar">
+        {/* Main Operational Actions Strip */}
+        <div className="ertmac-actions-bar">
           <button 
-            className={`hub-tab-btn ${activeTab === 'existing' ? 'active' : ''}`}
-            onClick={() => setActiveTab('existing')}
+            className="btn-main-action btn-action-plan"
+            onClick={handleNewPlanningDirect}
           >
-            <FolderKanban size={17} />
-            <span>Existing Projects ({existingProjects.length})</span>
+            <Compass size={18} color="#C0AA8A" />
+            <div className="action-text-col">
+              <span className="action-title">＋ New Well Planning</span>
+              <span className="action-sub">Candidate scouting &amp; constraints</span>
+            </div>
           </button>
 
           <button 
-            className={`hub-tab-btn ${activeTab === 'create' ? 'active' : ''}`}
-            onClick={() => setActiveTab('create')}
+            className="btn-main-action btn-action-monitor"
+            onClick={handleMonitorActiveDirect}
           >
-            <FolderPlus size={17} />
-            <span>+ Create New Well Project</span>
+            <div className="pulse-indicator-red" />
+            <div className="action-text-col">
+              <span className="action-title">Monitor Active Well</span>
+              <span className="action-sub">KG Basin D6 &bull; Real-time telemetry</span>
+            </div>
+            <ArrowRight size={16} className="action-arrow" />
           </button>
         </div>
 
-        {/* Tab 1: Existing Projects (Title only by default, details expand on click) */}
-        {activeTab === 'existing' && (
-          <div className="hub-existing-wrap">
-            <div className="hub-compact-list">
-              {existingProjects.map((p) => {
-                const isExpanded = expandedProjectId === p.id;
-                return (
-                  <div 
-                    key={p.id} 
-                    className={`hub-accordion-item ${isExpanded ? 'is-expanded' : ''}`}
-                  >
-                    {/* Compact Title Row — Clickable */}
-                    <div 
-                      className="accordion-title-bar"
-                      onClick={() => toggleExpand(p.id)}
-                      role="button"
-                      tabIndex={0}
-                      aria-expanded={isExpanded}
-                    >
-                      <div className="accordion-title-left">
-                        <div className="accordion-folder-icon">
-                          <FolderKanban size={18} color="#8F7C3A" />
-                        </div>
-                        <div>
-                          <h3 className="accordion-project-name">{p.name}</h3>
-                          <span className="accordion-basin-sub">{p.basin}</span>
-                        </div>
-                      </div>
+        {/* Existing Projects Section Header */}
+        <div className="ertmac-section-head">
+          <h2 className="section-title-label">Existing Projects</h2>
+          <button 
+            className="btn-create-toggle"
+            onClick={() => setShowCreateModal(true)}
+          >
+            <Plus size={14} />
+            <span>Custom Project</span>
+          </button>
+        </div>
 
-                      <div className="accordion-title-right">
-                        <span 
-                          className="accordion-status-pill"
-                          style={{ borderColor: p.statusColor, color: p.statusColor }}
-                        >
-                          {p.status}
-                        </span>
-                        <div className="accordion-toggle-indicator">
-                          {isExpanded ? (
-                            <>
-                              <span className="toggle-text">Hide Details</span>
-                              <ChevronUp size={16} />
-                            </>
-                          ) : (
-                            <>
-                              <span className="toggle-text">Click for Details</span>
-                              <ChevronDown size={16} />
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+        {/* 4 Workflow-State Cards Grid */}
+        <div className="ertmac-cards-grid">
+          {workflowProjects.map((p) => {
+            const isDrilling = p.status === 'DRILLING';
+            const isHighRisk = p.risk === 'HIGH';
 
-                    {/* Expandable Details Container */}
-                    {isExpanded && (
-                      <div className="accordion-details-panel">
-                        <p className="accordion-desc">{p.desc}</p>
-
-                        <div className="accordion-stats-grid">
-                          <div className="accordion-stat">
-                            <span className="stat-label">SELECTED / ACTIVE CANDIDATE</span>
-                            <span className="stat-val">{p.candidate}</span>
-                          </div>
-                          <div className="accordion-stat">
-                            <span className="stat-label">TARGET TOTAL DEPTH</span>
-                            <span className="stat-val">{p.depth}</span>
-                          </div>
-                          <div className="accordion-stat">
-                            <span className="stat-label">TARGET FORMATION</span>
-                            <span className="stat-val">{p.formation}</span>
-                          </div>
-                          <div className="accordion-stat">
-                            <span className="stat-label">CORRELATED OFFSET WELLS</span>
-                            <span className="stat-val" style={{ color: '#8F7C3A' }}>{p.offsetWells} Wells</span>
-                          </div>
-                        </div>
-
-                        <div className="accordion-action-footer">
-                          <div className="accordion-meta-hint">
-                            <span>Last accessed: {p.lastActive} &bull; Suitability Score: <strong>{p.score}%</strong></span>
-                          </div>
-                          <button 
-                            className="btn btn-primary btn-open-dashboard"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onSelectProject(p);
-                            }}
-                          >
-                            <span>Open Project Dashboard</span>
-                            <ArrowRight size={16} />
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-
-              {/* Quick Card to Create New Project directly from list */}
+            return (
               <div 
-                className="hub-create-shortcut-card"
-                onClick={() => setActiveTab('create')}
+                key={p.id}
+                className={`ertmac-project-card status-${p.statusType}`}
+                onClick={() => onSelectProject(p, p.defaultScreen)}
+                role="button"
+                tabIndex={0}
               >
-                <div className="create-shortcut-left">
-                  <FolderPlus size={20} color="#8F7C3A" />
+                {/* Project Header */}
+                <div className="card-top-row">
                   <div>
-                    <h4 className="create-shortcut-title">+ Create New Well Project</h4>
-                    <span className="create-shortcut-sub">Initialize target coordinates, formation, and planning constraints</span>
+                    <h3 className="card-proj-name">{p.name}</h3>
+                    <div className="card-field-name">{p.field} &bull; {p.formation}</div>
+                  </div>
+                  <span className={`card-status-pill pill-${p.statusType}`}>
+                    <span className="dot" />
+                    <span>{p.status}</span>
+                  </span>
+                </div>
+
+                {/* Card Specs */}
+                <div className="card-specs-box">
+                  <div className="spec-item">
+                    <span className="spec-label">DEPTH</span>
+                    <span className="spec-val depth-val">{p.depthDisplay}</span>
+                  </div>
+
+                  <div className="spec-item">
+                    <span className="spec-label">RISK STATUS</span>
+                    <span className={`spec-val risk-val risk-${p.riskLevel}`}>
+                      {isHighRisk ? '🔴 HIGH' : p.risk === 'MEDIUM' ? '🟡 MEDIUM' : '🟢 LOW'}
+                    </span>
+                  </div>
+
+                  <div className="spec-item full-width">
+                    <span className="spec-label">OFFSETS</span>
+                    <span className="spec-val offsets-val">{p.offsetWells}</span>
                   </div>
                 </div>
-                <div className="create-shortcut-btn">
-                  <span>Start New Project</span>
-                  <ArrowRight size={14} />
+
+                {/* Card Footer Action */}
+                <div className="card-action-row">
+                  <span className="card-workflow-tag">{p.workflowType}</span>
+                  <div className="card-open-link">
+                    <span>Open</span>
+                    <ArrowRight size={13} />
+                  </div>
                 </div>
               </div>
+            );
+          })}
+        </div>
+
+        {/* Custom Project Creation Modal */}
+        {showCreateModal && (
+          <div className="custom-create-overlay" onClick={() => setShowCreateModal(false)}>
+            <div className="custom-create-dialog" onClick={e => e.stopPropagation()}>
+              <div className="dialog-header">
+                <h3>Initialize Custom Well Prospect</h3>
+                <button className="dialog-close" onClick={() => setShowCreateModal(false)}>
+                  <X size={18} />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateSubmit} className="hub-create-form">
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label className="form-label">Field / Exploration Basin</label>
+                    <select 
+                      value={area} 
+                      onChange={(e) => setArea(e.target.value)} 
+                      className="form-select"
+                    >
+                      <option value="Rajasthan Block A">Rajasthan Block A (Barmer Basin)</option>
+                      <option value="KG Basin D6">KG Basin D6 (Krishna-Godavari)</option>
+                      <option value="Assam Shelf Block B">Assam Shelf Block B (Upper Assam)</option>
+                      <option value="Offshore Field 7">Offshore Field 7 (Volve 15/9)</option>
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Target Formation / Reservoir</label>
+                    <select 
+                      value={formation} 
+                      onChange={(e) => setFormation(e.target.value)} 
+                      className="form-select"
+                    >
+                      <option value="Forties Sandstone">Forties Sandstone (Paleocene)</option>
+                      <option value="Fatehgarh Sandstone">Fatehgarh Sandstone (Cretaceous)</option>
+                      <option value="Ravva Sandstone">Ravva Sandstone (Miocene)</option>
+                      <option value="Barail Group">Barail Group (Oligocene)</option>
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Target Total Depth (m MD)</label>
+                    <div className="input-with-unit">
+                      <input 
+                        type="number" 
+                        value={depth} 
+                        onChange={(e) => setDepth(e.target.value)} 
+                        className="form-input"
+                        placeholder="3200"
+                        required
+                      />
+                      <span className="input-unit">m</span>
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Drilling Objective</label>
+                    <select 
+                      value={objective} 
+                      onChange={(e) => setObjective(e.target.value)} 
+                      className="form-select"
+                    >
+                      <option value="Exploration">Exploration (Wildcat)</option>
+                      <option value="Appraisal">Appraisal (Delineation)</option>
+                      <option value="Development">Development (Infill)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-actions-row">
+                  <button 
+                    type="button" 
+                    className="btn btn-secondary" 
+                    onClick={() => setShowCreateModal(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn btn-primary">
+                    <Compass size={16} />
+                    <span>Initialize Prospect</span>
+                  </button>
+                </div>
+              </form>
             </div>
-          </div>
-        )}
-
-        {/* Tab 2: Create New Well Project Form */}
-        {activeTab === 'create' && (
-          <div className="hub-create-wrap">
-            <form onSubmit={handleCreateSubmit} className="hub-create-form">
-              <div className="form-info-banner">
-                <Compass size={20} color="#8F7C3A" style={{ flexShrink: 0 }} />
-                <div>
-                  <strong>New Well Project Initialization:</strong> Define exploration coordinates and target formations. The planning engine will automatically correlate offset wells and score surface candidate locations.
-                </div>
-              </div>
-
-              <div className="form-grid">
-                {/* Field / Area */}
-                <div className="form-group">
-                  <label className="form-label">Field / Exploration Area</label>
-                  <select 
-                    value={area} 
-                    onChange={(e) => setArea(e.target.value)} 
-                    className="form-select"
-                  >
-                    <option value="Rajasthan Block A">Rajasthan Block A (Barmer Basin)</option>
-                    <option value="KG Basin Deepwater">KG Basin Deepwater (Offshore East Coast)</option>
-                    <option value="Offshore Field 7 (Volve 15/9)">Offshore Field 7 (Volve Field Block 15/9)</option>
-                    <option value="Assam Shelf Block B">Assam Shelf Block B (Upper Assam Basin)</option>
-                    <option value="Cambay Basin Block 4">Cambay Basin Block 4 (Western Onshore)</option>
-                  </select>
-                </div>
-
-                {/* Target Formation */}
-                <div className="form-group">
-                  <label className="form-label">Target Formation / Reservoir</label>
-                  <select 
-                    value={formation} 
-                    onChange={(e) => setFormation(e.target.value)} 
-                    className="form-select"
-                  >
-                    <option value="Forties Sandstone">Forties Sandstone (Paleocene Reservoir)</option>
-                    <option value="Fatehgarh Sandstone">Fatehgarh Sandstone (Barmer Cretaceous)</option>
-                    <option value="Hugin Formation">Hugin Formation (Middle Jurassic)</option>
-                    <option value="Ravva Sandstone">Ravva Sandstone (KG Basin Miocene)</option>
-                    <option value="Barail Group">Barail Group (Oligocene Sandstone)</option>
-                  </select>
-                </div>
-
-                {/* Target Depth */}
-                <div className="form-group">
-                  <label className="form-label">Target Total Depth (m MD / TVD)</label>
-                  <div className="input-with-unit">
-                    <input 
-                      type="number" 
-                      value={depth} 
-                      onChange={(e) => setDepth(e.target.value)} 
-                      className="form-input"
-                      placeholder="3200"
-                      required
-                    />
-                    <span className="input-unit">m</span>
-                  </div>
-                </div>
-
-                {/* Objective */}
-                <div className="form-group">
-                  <label className="form-label">Well Project Objective</label>
-                  <select 
-                    value={objective} 
-                    onChange={(e) => setObjective(e.target.value)} 
-                    className="form-select"
-                  >
-                    <option value="Exploration">Exploration (Wildcat / High Step-out)</option>
-                    <option value="Appraisal">Appraisal (Delineating Proven Discovery)</option>
-                    <option value="Development">Development (Infill Production Well)</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Form Action Row */}
-              <div className="form-actions-row">
-                <button type="button" className="btn btn-secondary" onClick={() => setActiveTab('existing')}>
-                  Back to Existing Projects
-                </button>
-                <button type="submit" className="btn btn-primary btn-start-planning">
-                  <Compass size={18} />
-                  <span>Start Planning Mode</span>
-                  <ArrowRight size={16} />
-                </button>
-              </div>
-            </form>
           </div>
         )}
       </div>
