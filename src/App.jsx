@@ -19,21 +19,24 @@ export default function App() {
 
   // Current active project
   const [currentProject, setCurrentProject] = useState({
-    id: 'raj-a',
-    name: 'Rajasthan Block A',
-    basin: 'Barmer Basin / Western Onshore',
-    status: 'Planning Mode',
-    candidate: 'Candidate B (Recommended)',
-    score: 89,
-    depth: '3,200 m',
-    formation: 'Fatehgarh Sandstone',
-    offsetWells: 5,
-    alerts: 1,
-    desc: 'Pre-spud planning with 5 offset wells correlated. Candidate B selected for optimal trajectory feasibility.'
+    id: 'kg-basin',
+    name: 'KG Basin D6',
+    field: 'Krishna-Godavari',
+    formation: 'Ravva Sandstone',
+    status: 'DRILLING',
+    statusType: 'active',
+    workflowType: 'Active Well Monitoring',
+    depthDisplay: 'Current: 2,184 m',
+    depth: '2,184 m',
+    targetDepth: '3,450 m',
+    risk: 'HIGH',
+    riskLevel: 'high',
+    offsetWells: '8 Offset Wells',
+    defaultScreen: 'active_well'
   });
 
-  // Active module tab in console
-  const [activeConsoleTab, setActiveConsoleTab] = useState('dashboard');
+  // Active module tab in console ('active_well' | 'planning' | 'offsets' | 'historical')
+  const [activeConsoleTab, setActiveConsoleTab] = useState('active_well');
 
   // Modal state for interactive details
   const [modalData, setModalData] = useState(null);
@@ -67,15 +70,37 @@ export default function App() {
     setView('project_hub');
   };
 
-  const handleSelectProject = (project) => {
+  const handleOpenDemo = () => {
+    // Directly launch into the active drilling well command center for reviewers
+    setCurrentProject({
+      id: 'kg-basin',
+      name: 'KG Basin D6',
+      field: 'Krishna-Godavari',
+      formation: 'Ravva Sandstone',
+      status: 'DRILLING',
+      statusType: 'active',
+      workflowType: 'Active Well Monitoring',
+      depthDisplay: 'Current: 2,184 m',
+      depth: '2,184 m',
+      targetDepth: '3,450 m',
+      risk: 'HIGH',
+      riskLevel: 'high',
+      offsetWells: '8 Offset Wells',
+      defaultScreen: 'active_well'
+    });
+    setActiveConsoleTab('active_well');
+    setView('console');
+  };
+
+  const handleSelectProject = (project, targetScreen = 'active_well') => {
     setCurrentProject(project);
-    setActiveConsoleTab('dashboard');
+    setActiveConsoleTab(targetScreen || project.defaultScreen || 'active_well');
     setView('console');
   };
 
   const handleCreateProject = (newProject) => {
     setCurrentProject(newProject);
-    setActiveConsoleTab('explore'); // Per document: go directly to Explore & Plan map to place candidates
+    setActiveConsoleTab('planning');
     setView('console');
   };
 
@@ -108,17 +133,19 @@ export default function App() {
             user={user}
             onOpenLogin={handleOpenLogin}
             onOpenProjects={handleOpenProjects}
+            onOpenDemo={handleOpenDemo}
             onLogout={handleLogout}
           />
           <Hero 
             isLoggedIn={isLoggedIn}
             onOpenLogin={handleOpenLogin}
             onOpenProjects={handleOpenProjects}
+            onOpenDemo={handleOpenDemo}
             onOpenModal={handleOpenModal} 
           />
           <div className="hero-scroll-fade-transition" />
           <StreamlinedFeatures onOpenModal={handleOpenModal} />
-          <Footer onOpenModal={handleOpenModal} />
+          <Footer />
         </>
       )}
 
@@ -130,7 +157,7 @@ export default function App() {
         />
       )}
 
-      {/* Project Hub Modal / Wizard */}
+      {/* eRTMAC-NWIS Workspace & Project Hub */}
       {view === 'project_hub' && (
         <ProjectHub
           user={user}

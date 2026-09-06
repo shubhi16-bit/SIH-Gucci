@@ -12,7 +12,7 @@ export default function Navbar({ isLoggedIn, user, onOpenLogin, onOpenProjects, 
             <div className="brand-bar brand-bar-2" />
             <div className="brand-bar brand-bar-3" />
           </div>
-          <span className="brand-title">NWIS</span>
+          <span className="brand-title">eRTMAC-NWIS</span>
         </a>
 
         {/* Navigation Links */}
