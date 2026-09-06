@@ -9,7 +9,9 @@ import {
   FolderKanban, 
   ChevronRight, 
   AlertTriangle,
-  ArrowRight
+  ArrowRight,
+  Sun,
+  Moon
 } from 'lucide-react';
 import ActiveWellMonitor from './ActiveWellMonitor';
 import PlanningWorkspace from './PlanningWorkspace';
@@ -24,7 +26,9 @@ export default function EngineeringConsole({
   onSwitchProject, 
   onExit, 
   onOpenModal,
-  user
+  user,
+  theme = 'dark',
+  onToggleTheme
 }) {
   // State for persistent AI Copilot Drawer
   const [isAIDrawerOpen, setIsAIDrawerOpen] = useState(false);
@@ -120,6 +124,19 @@ export default function EngineeringConsole({
             <div className="engineer-avatar">{user ? user.username : '123'}</div>
             <span>Engineer {user ? user.username : '123'}</span>
           </div>
+
+          {/* Theme Toggle Button */}
+          {onToggleTheme && (
+            <button 
+              className="btn-theme-toggle" 
+              onClick={onToggleTheme} 
+              title={theme === 'dark' ? "Switch to Light Mode" : "Switch to Dark Mode"}
+              aria-label="Toggle theme"
+            >
+              {theme === 'dark' ? <Sun size={15} color="#C0AA8A" /> : <Moon size={15} color="#8F7C3A" />}
+              <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+            </button>
+          )}
 
           {/* Exit Button */}
           <button 
