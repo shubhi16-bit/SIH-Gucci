@@ -22,7 +22,7 @@ export default function LoginModal({ onLoginSuccess, onClose }) {
           role: 'Lead Drilling Engineer',
           avatar: 'DE'
         });
-      }, 300);
+      }, 250);
     } else {
       setError('Invalid credentials. Use sample login: Username "123" and Password "123".');
     }
@@ -42,27 +42,17 @@ export default function LoginModal({ onLoginSuccess, onClose }) {
           <X size={20} />
         </button>
 
-        {/* Modal Header */}
-        <div className="login-header">
-          <div className="login-icon-badge">
-            <Lock size={22} color="#8F7C3A" />
-          </div>
-          <span className="login-tag">ENGINEER AUTHENTICATION</span>
-          <h2 className="login-title">Sign In to NWIS Console</h2>
-          <p className="login-subtitle">
-            Access active well trajectories, WITSML telemetry, and offset well intelligence.
-          </p>
+        {/* Minimal Engineer Header */}
+        <div className="login-header minimal-header">
+          <h2 className="login-title-minimal">Welcome Engineer</h2>
         </div>
 
-        {/* Demo Credentials Quick-Notice */}
+        {/* Sample Credentials Quick-Notice */}
         <div className="demo-credentials-banner">
           <div className="demo-banner-left">
-            <KeyRound size={17} color="#8F7C3A" style={{ flexShrink: 0 }} />
-            <div>
-              <div className="demo-banner-title">Sample Credentials:</div>
-              <div className="demo-banner-creds">
-                Username: <code>123</code> &bull; Password: <code>123</code>
-              </div>
+            <KeyRound size={16} color="#8F7C3A" style={{ flexShrink: 0 }} />
+            <div className="demo-banner-creds">
+              Sample login: <code>123</code> / <code>123</code>
             </div>
           </div>
           <button 
@@ -78,24 +68,24 @@ export default function LoginModal({ onLoginSuccess, onClose }) {
         {/* Error Notification */}
         {error && (
           <div className="login-error-box">
-            <AlertCircle size={18} color="#FF6B6B" style={{ flexShrink: 0 }} />
+            <AlertCircle size={17} color="#FF6B6B" style={{ flexShrink: 0 }} />
             <span>{error}</span>
           </div>
         )}
 
-        {/* Login Form */}
+        {/* Minimal Login Form */}
         <form onSubmit={handleSubmit} className="login-form">
           <div className="form-group">
             <label className="form-label" htmlFor="login-username">
-              Email or Username
+              Username or Email
             </label>
             <div className="login-input-wrap">
-              <User size={17} className="input-icon" />
+              <User size={16} className="input-icon" />
               <input
                 id="login-username"
                 type="text"
                 className="form-input login-input"
-                placeholder="Enter email or username (123)"
+                placeholder="Enter username (123)"
                 value={username}
                 onChange={(e) => { setUsername(e.target.value); setError(''); }}
                 required
@@ -109,7 +99,7 @@ export default function LoginModal({ onLoginSuccess, onClose }) {
               Password
             </label>
             <div className="login-input-wrap">
-              <Lock size={17} className="input-icon" />
+              <Lock size={16} className="input-icon" />
               <input
                 id="login-password"
                 type="password"
@@ -128,19 +118,15 @@ export default function LoginModal({ onLoginSuccess, onClose }) {
             disabled={isLoading}
           >
             {isLoading ? (
-              <span>Authenticating...</span>
+              <span>Signing in...</span>
             ) : (
               <>
-                <span>Log In to Workspace</span>
-                <ArrowRight size={17} />
+                <span>Enter Workspace</span>
+                <ArrowRight size={16} />
               </>
             )}
           </button>
         </form>
-
-        <div className="login-footer-hint">
-          <span>Protected National Well Intelligence System session</span>
-        </div>
       </div>
     </div>
   );

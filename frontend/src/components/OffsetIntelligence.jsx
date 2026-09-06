@@ -1,202 +1,265 @@
 import React, { useState } from 'react';
-import { OFFSET_WELLS } from '../data/mockData';
-import { Database, GitCompare, History, HelpCircle, ChevronRight, Check } from 'lucide-react';
+import { 
+  Database, 
+  GitCompare, 
+  AlertTriangle, 
+  CheckCircle2, 
+  ArrowRight, 
+  Sliders, 
+  Activity, 
+  FileText 
+} from 'lucide-react';
 
-export default function OffsetIntelligence({ onOpenModal }) {
+export default function OffsetIntelligence({ project, onOpenModal }) {
   const [selectedWellId, setSelectedWellId] = useState("15/9-19 A");
 
-  const activeWell = OFFSET_WELLS.find(w => w.id === selectedWellId) || OFFSET_WELLS[0];
+  const similarWells = [
+    {
+      id: "15/9-19 A",
+      similarity: 89,
+      formation: "Forties Sandstone",
+      depthOverlap: "91%",
+      trajectory: "Similar (24° build section)",
+      eventsCount: 3,
+      topEvent: "Stuck Pipe — 2,162m",
+      eventSeverity: "high",
+      factors: {
+        formation: 95,
+        depth: 88,
+        trajectory: 82,
+        location: 76,
+        drillingProfile: 84
+      },
+      summary: "High Net-to-Gross Paleocene reservoir analogue with identical lithology contacts and mud weight pressure profile."
+    },
+    {
+      id: "15/9-F-5",
+      similarity: 82,
+      formation: "Forties Sandstone",
+      depthOverlap: "85%",
+      trajectory: "Parallel build-and-hold",
+      eventsCount: 0,
+      topEvent: "Clean drilling run to TD",
+      eventSeverity: "safe",
+      factors: {
+        formation: 92,
+        depth: 84,
+        trajectory: 80,
+        location: 74,
+        drillingProfile: 81
+      },
+      summary: "Production well drilled with synthetic-based mud. Encountered zero differential sticking or lost circulation intervals."
+    },
+    {
+      id: "15/9-F-7",
+      similarity: 76,
+      formation: "Hugin / Forties",
+      depthOverlap: "78%",
+      trajectory: "High inclination (32°)",
+      eventsCount: 1,
+      topEvent: "Mud Loss — 1,900m",
+      eventSeverity: "med",
+      factors: {
+        formation: 78,
+        depth: 75,
+        trajectory: 73,
+        location: 78,
+        drillingProfile: 76
+      },
+      summary: "Offset reservoir appraisal well. Experienced micro-fracture fluid losses in upper transition zone at 1,900m MD."
+    }
+  ];
+
+  const currentWell = similarWells.find(w => w.id === selectedWellId) || similarWells[0];
 
   return (
-    <section id="offsets" className="section-wrapper">
-      <div className="container">
-        <div className="section-header">
-          <span className="section-eyebrow">Subsurface Analogue Matching</span>
-          <h2 className="section-title">
-            Offset Intelligence & Well Similarity Engine
-          </h2>
-          <p className="section-description">
-            Distance is not similarity. NWIS calculates multi-dimensional analogue compatibility based on lithology, formation pore pressure, trajectory curvature, and depth overlap.
+    <div className="offset-intel-layout">
+      {/* 1. Header & Current Well Context Banner */}
+      <div className="offset-header-block">
+        <div className="ohb-left">
+          <span className="ohb-tag">ANALOGUE MATCHING ENGINE</span>
+          <h2 className="ohb-title">Offset Intelligence &amp; Well Similarity</h2>
+          <p className="ohb-sub">
+            Multi-dimensional feature scoring across lithology, pore pressure, trajectory curvature, and depth interval overlap.
           </p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.35fr', gap: '32px' }}>
-          {/* Left Column: Ranked Similar Offset Wells */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-              Ranked Analogous Wells ({OFFSET_WELLS.length} Found in Volve Field)
-            </div>
+        {/* Current Well Context Pill */}
+        <div className="current-well-context-card">
+          <div className="cwc-label">CURRENT ACTIVE WELL</div>
+          <div className="cwc-id">{project?.name || '15/9-F-1'}</div>
+          <div className="cwc-specs">
+            <span>Depth: <strong>2,150 m</strong></span>
+            <span>&bull;</span>
+            <span>Formation: <strong>Forties Sandstone</strong></span>
+          </div>
+        </div>
+      </div>
 
-            {OFFSET_WELLS.map((well, idx) => {
+      {/* 2. Main Two-Column Layout */}
+      <div className="offset-2col-grid">
+        {/* Left Column: Top Similar Wells */}
+        <div className="offset-col-left">
+          <div className="col-section-header">
+            <span className="csh-title">TOP SIMILAR WELLS</span>
+            <span className="csh-count">{similarWells.length} High Analogues</span>
+          </div>
+
+          <div className="similar-cards-stack">
+            {similarWells.map((well) => {
               const isSelected = well.id === selectedWellId;
+              const isHighDanger = well.eventSeverity === 'high';
+
               return (
                 <div
                   key={well.id}
+                  className={`similar-well-card ${isSelected ? 'is-selected' : ''}`}
                   onClick={() => setSelectedWellId(well.id)}
-                  style={{
-                    background: 'var(--bg-surface)',
-                    border: `1.5px solid ${isSelected ? 'var(--palette-deep-peach)' : 'var(--border-card)'}`,
-                    borderRadius: '16px',
-                    padding: '20px',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    boxShadow: isSelected ? 'var(--shadow-md)' : 'var(--shadow-sm)',
-                    position: 'relative'
-                  }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                    <div>
-                      <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--palette-clay-dust)', fontFamily: 'monospace' }}>
-                        RANK #{idx + 1} • {well.field}
-                      </span>
-                      <h4 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                        {well.id}
-                      </h4>
+                  <div className="swc-top">
+                    <div className="swc-id-col">
+                      <h4 className="swc-well-id">{well.id}</h4>
+                      <span className="swc-formation-tag">{well.formation}</span>
                     </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: '1.5rem', fontWeight: 800, fontFamily: 'monospace', color: 'var(--palette-deep-peach)' }}>
-                        {well.similarity}%
-                      </div>
-                      <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)' }}>SIMILARITY</span>
+
+                    <div className="swc-score-badge">
+                      <span className="swc-score-num">{well.similarity}%</span>
+                      <span className="swc-score-lbl">SIMILARITY</span>
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '12px', fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>
-                    <span>Target: <strong>{well.formation}</strong></span>
-                    <span>•</span>
-                    <span>TD: <strong>{well.td}</strong></span>
-                    <span>•</span>
-                    <span>Incidents: <strong>{well.eventsCount}</strong></span>
+                  <div className="swc-metrics-row">
+                    <div className="swc-metric">
+                      <span className="m-lbl">Depth overlap</span>
+                      <span className="m-val">{well.depthOverlap}</span>
+                    </div>
+                    <div className="swc-metric">
+                      <span className="m-lbl">Trajectory</span>
+                      <span className="m-val">{well.trajectory}</span>
+                    </div>
+                    <div className="swc-metric">
+                      <span className="m-lbl">Historical Events</span>
+                      <span className="m-val">{well.eventsCount} Recorded</span>
+                    </div>
                   </div>
 
-                  <div style={{ 
-                    background: 'var(--bg-subtle)', 
-                    padding: '8px 12px', 
-                    borderRadius: '8px', 
-                    fontSize: '0.78rem',
-                    color: 'var(--palette-maroon)',
-                    fontWeight: 600,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between'
-                  }}>
-                    <span>Key historical event: {well.topEvent}</span>
-                    <ChevronRight size={14} />
+                  {/* Primary Event Flag */}
+                  <div className={`swc-event-banner banner-${well.eventSeverity}`}>
+                    <AlertTriangle size={14} />
+                    <span>{well.topEvent}</span>
                   </div>
                 </div>
               );
             })}
           </div>
+        </div>
 
-          {/* Right Column: Explainability - WHY IS THIS WELL SIMILAR? */}
-          <div className="feature-box" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '16px', marginBottom: '20px' }}>
-                <div>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--brand-secondary)', textTransform: 'uppercase' }}>
-                    Analogue Compatibility Breakdown
-                  </span>
-                  <h3 style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                    Why is {activeWell.id} {activeWell.similarity}% Similar?
-                  </h3>
-                </div>
-                <button
-                  className="btn btn-secondary"
-                  style={{ padding: '6px 14px', fontSize: '0.82rem' }}
-                  onClick={() => onOpenModal({
-                    title: `Well-to-Well Comparison: Planned vs ${activeWell.id}`,
-                    subtitle: "Synchronized Depth Track Correlation",
-                    content: `Comparing lithology columns, ROP curves, torque logs, and casing shoes between planned candidate and offset well ${activeWell.id} from surface down to 3,200m MD.`
-                  })}
-                >
-                  <GitCompare size={14} />
-                  <span>Compare Curves</span>
-                </button>
+        {/* Right Column: "Why Similar?" Explainable Factor Model */}
+        <div className="offset-col-right">
+          <div className="col-section-header">
+            <span className="csh-title">WHY SIMILAR? EXPLAINABLE FACTORS</span>
+            <span className="csh-sub">Grounded In Multi-Parameter Correlation</span>
+          </div>
+
+          <div className="explainable-model-card">
+            <div className="emc-header">
+              <div>
+                <h3 className="emc-well-title">{currentWell.id} Analogue Breakdown</h3>
+                <p className="emc-well-sub">{currentWell.summary}</p>
               </div>
+              <div className="emc-total-pill">
+                <span>Overall:</span>
+                <strong>{currentWell.similarity}%</strong>
+              </div>
+            </div>
 
-              {/* Similarity Factors Breakdown */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '24px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.86rem', color: 'var(--text-secondary)' }}>
-                  <span>Target Formation Match (Forties Reservoir)</span>
-                  <span style={{ fontWeight: 800, color: 'var(--brand-primary)' }}>30% / 30%</span>
+            {/* Factor Bars */}
+            <div className="factors-bars-stack">
+              {/* Formation */}
+              <div className="factor-bar-row">
+                <div className="fbr-info">
+                  <span className="fbr-label">Formation &amp; Lithology</span>
+                  <span className="fbr-val">{currentWell.factors.formation}%</span>
                 </div>
-                <div className="meter-track">
-                  <div className="meter-fill" style={{ width: '100%', background: 'var(--palette-river-pine)' }} />
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.86rem', color: 'var(--text-secondary)' }}>
-                  <span>Total Depth Overlap & Interval Correlation</span>
-                  <span style={{ fontWeight: 800, color: 'var(--brand-primary)' }}>25% / 25%</span>
-                </div>
-                <div className="meter-track">
-                  <div className="meter-fill" style={{ width: '96%', background: 'var(--palette-river-pine)' }} />
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.86rem', color: 'var(--text-secondary)' }}>
-                  <span>Directional Trajectory & Dogleg Severity</span>
-                  <span style={{ fontWeight: 800, color: 'var(--brand-primary)' }}>18% / 20%</span>
-                </div>
-                <div className="meter-track">
-                  <div className="meter-fill" style={{ width: '90%', background: 'var(--palette-river-pine)' }} />
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.86rem', color: 'var(--text-secondary)' }}>
-                  <span>Spatial Proximity within Volve Basin ({activeWell.td})</span>
-                  <span style={{ fontWeight: 800, color: 'var(--brand-primary)' }}>15% / 15%</span>
-                </div>
-                <div className="meter-track">
-                  <div className="meter-fill" style={{ width: '100%', background: 'var(--palette-river-pine)' }} />
+                <div className="fbr-track">
+                  <div className="fbr-fill fill-gold" style={{ width: `${currentWell.factors.formation}%` }} />
                 </div>
               </div>
 
-              {/* Historical Depth Event Timeline Preview */}
-              <div style={{ background: 'var(--bg-subtle)', borderRadius: '12px', padding: '16px', border: '1px solid var(--border-subtle)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '10px' }}>
-                  <History size={16} color="var(--brand-accent)" />
-                  <span>Historical Event Depth Markers in {activeWell.id}</span>
+              {/* Depth */}
+              <div className="factor-bar-row">
+                <div className="fbr-info">
+                  <span className="fbr-label">Depth Interval Overlap</span>
+                  <span className="fbr-val">{currentWell.factors.depth}%</span>
                 </div>
-                
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative', padding: '12px 0' }}>
-                  <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: 2, background: 'var(--palette-clay-dust)', zIndex: 1 }} />
-                  
-                  <div style={{ position: 'relative', zIndex: 2, textAlign: 'center' }}>
-                    <div style={{ width: 12, height: 12, borderRadius: '50%', background: 'var(--palette-river-pine)', margin: '0 auto 4px' }} />
-                    <span style={{ fontSize: '0.72rem', fontWeight: 700, fontFamily: 'monospace' }}>0m Surface</span>
-                  </div>
+                <div className="fbr-track">
+                  <div className="fbr-fill fill-gold" style={{ width: `${currentWell.factors.depth}%` }} />
+                </div>
+              </div>
 
-                  <div style={{ position: 'relative', zIndex: 2, textAlign: 'center' }}>
-                    <div style={{ width: 14, height: 14, borderRadius: '50%', background: 'var(--palette-deep-peach)', margin: '0 auto 4px' }} />
-                    <span style={{ fontSize: '0.72rem', fontWeight: 700, fontFamily: 'monospace', color: 'var(--palette-deep-peach)' }}>1,840m Kick</span>
-                  </div>
+              {/* Trajectory */}
+              <div className="factor-bar-row">
+                <div className="fbr-info">
+                  <span className="fbr-label">Trajectory &amp; Dogleg Profile</span>
+                  <span className="fbr-val">{currentWell.factors.trajectory}%</span>
+                </div>
+                <div className="fbr-track">
+                  <div className="fbr-fill fill-gold" style={{ width: `${currentWell.factors.trajectory}%` }} />
+                </div>
+              </div>
 
-                  <div style={{ position: 'relative', zIndex: 2, textAlign: 'center' }}>
-                    <div style={{ width: 14, height: 14, borderRadius: '50%', background: 'var(--palette-maroon)', margin: '0 auto 4px' }} />
-                    <span style={{ fontSize: '0.72rem', fontWeight: 700, fontFamily: 'monospace', color: 'var(--palette-maroon)' }}>2,840m Mud Loss</span>
-                  </div>
+              {/* Location */}
+              <div className="factor-bar-row">
+                <div className="fbr-info">
+                  <span className="fbr-label">Geographic &amp; Structural Proximity</span>
+                  <span className="fbr-val">{currentWell.factors.location}%</span>
+                </div>
+                <div className="fbr-track">
+                  <div className="fbr-fill fill-gold" style={{ width: `${currentWell.factors.location}%` }} />
+                </div>
+              </div>
 
-                  <div style={{ position: 'relative', zIndex: 2, textAlign: 'center' }}>
-                    <div style={{ width: 12, height: 12, borderRadius: '50%', background: 'var(--palette-river-pine)', margin: '0 auto 4px' }} />
-                    <span style={{ fontSize: '0.72rem', fontWeight: 700, fontFamily: 'monospace' }}>3,200m TD</span>
-                  </div>
+              {/* Drilling Profile */}
+              <div className="factor-bar-row">
+                <div className="fbr-info">
+                  <span className="fbr-label">Drilling Telemetry &amp; WOB/RPM Profile</span>
+                  <span className="fbr-val">{currentWell.factors.drillingProfile}%</span>
+                </div>
+                <div className="fbr-track">
+                  <div className="fbr-fill fill-gold" style={{ width: `${currentWell.factors.drillingProfile}%` }} />
                 </div>
               </div>
             </div>
 
-            {/* Bottom Button */}
-            <button
-              className="btn btn-primary"
-              style={{ marginTop: '20px', width: '100%' }}
+            {/* Highlighted Warning for Selected Analogue */}
+            {currentWell.id === '15/9-19 A' && (
+              <div className="analogue-incident-dossier">
+                <div className="aid-head">
+                  <AlertTriangle size={16} color="#EF4444" />
+                  <strong>CRITICAL HISTORICAL LESSON (DDR #43)</strong>
+                </div>
+                <p className="aid-text">
+                  Offset 15/9-19 A suffered complete differential sticking at 2,162m MD due to permeable sandstone drawdown and stationary drillstring during survey. 
+                  Recommended mitigation: maintain continuous pipe rotation and reduce overbalance margin.
+                </p>
+              </div>
+            )}
+
+            <button 
+              className="btn btn-primary btn-view-dossier"
               onClick={() => onOpenModal({
-                title: `Offset Dossier: ${activeWell.id}`,
-                subtitle: "Volve Field Digital Well Archive",
-                content: `Loading complete daily drilling reports, directional survey records, mud weight windows, and casing programmes for offset well ${activeWell.id}.`
+                title: `Analogue Well Dossier: ${currentWell.id}`,
+                subtitle: `Similarity Match: ${currentWell.similarity}% • Formation: ${currentWell.formation}`,
+                content: `Displaying full composite well log and engineering history for ${currentWell.id}.\n\n• Spud Date: 2008-03-04\n• Total Depth (TD): 3,240m MD\n• Mud Program: 1.28 SG KCl Polymer Mud\n• Bit Record: 12-1/4" PDC Bit run #3 (averaged 22 m/h)\n• Non-Productive Time (NPT): 28.5 hours total (Jarring & freeing differential sticking at 2,162m).`
               })}
             >
+              <FileText size={16} />
               <span>Inspect Full Historical Offset Dossier</span>
+              <ArrowRight size={15} />
             </button>
           </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 }
