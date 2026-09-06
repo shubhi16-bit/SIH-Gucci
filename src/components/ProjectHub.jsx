@@ -9,10 +9,20 @@ import {
   Layers, 
   LogOut, 
   FolderKanban, 
-  FileText 
+  FileText,
+  Sun,
+  Moon
 } from 'lucide-react';
 
-export default function ProjectHub({ onSelectProject, onCreateProject, onClose, user, onLogout }) {
+export default function ProjectHub({ 
+  onSelectProject, 
+  onCreateProject, 
+  onClose, 
+  user, 
+  onLogout,
+  theme = 'dark',
+  onToggleTheme 
+}) {
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   // Form state for creating a new well project
@@ -147,6 +157,17 @@ export default function ProjectHub({ onSelectProject, onCreateProject, onClose, 
           </div>
 
           <div className="hub-header-actions">
+            {onToggleTheme && (
+              <button 
+                className="btn-theme-toggle" 
+                onClick={onToggleTheme} 
+                title={theme === 'dark' ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                aria-label="Toggle theme"
+              >
+                {theme === 'dark' ? <Sun size={15} color="#C0AA8A" /> : <Moon size={15} color="#8F7C3A" />}
+                <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
+              </button>
+            )}
             {onLogout && (
               <button className="btn-hub-logout" onClick={onLogout} title="Log out">
                 <LogOut size={15} />

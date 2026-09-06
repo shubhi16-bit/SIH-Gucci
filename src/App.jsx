@@ -41,9 +41,25 @@ export default function App() {
   // Modal state for interactive details
   const [modalData, setModalData] = useState(null);
 
+  // Theme state for post-landing workspace: 'dark' | 'light'
+  const [theme, setTheme] = useState(() => localStorage.getItem('nwis-theme') || 'dark');
+
+  const handleToggleTheme = () => {
+    setTheme(prev => {
+      const next = prev === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('nwis-theme', next);
+      return next;
+    });
+  };
+
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', 'dark');
-  }, []);
+    // Landing page (where the video hero is) strictly stays in dark mode
+    if (view === 'landing') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    } else {
+      document.documentElement.setAttribute('data-theme', theme);
+    }
+  }, [view, theme]);
 
   const handleOpenLogin = () => {
     if (isLoggedIn) {
@@ -124,6 +140,8 @@ export default function App() {
           onExit={() => setView('landing')}
           onOpenModal={handleOpenModal}
           user={user}
+          theme={theme}
+          onToggleTheme={handleToggleTheme}
         />
       ) : (
         /* Minimal Landing Page */
@@ -165,6 +183,8 @@ export default function App() {
           onCreateProject={handleCreateProject}
           onClose={() => setView('landing')}
           onLogout={handleLogout}
+          theme={theme}
+          onToggleTheme={handleToggleTheme}
         />
       )}
 
