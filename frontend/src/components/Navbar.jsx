@@ -18,7 +18,6 @@ export default function Navbar({ isLoggedIn, user, onOpenLogin, onOpenProjects, 
         {/* Navigation Links */}
         <nav>
           <ul className="nav-links">
-            <li><a href="#overview" className="nav-link">Platform</a></li>
             <li><a href="#workflow" className="nav-link">Lifecycle</a></li>
             <li><a href="#phases" className="nav-link">Core Phases</a></li>
           </ul>

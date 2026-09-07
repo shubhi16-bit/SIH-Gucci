@@ -17,6 +17,7 @@ import {
 export default function ProjectHub({ 
   onSelectProject, 
   onCreateProject, 
+  onOpenWellOffset,
   onClose, 
   user, 
   onLogout,
@@ -131,17 +132,7 @@ export default function ProjectHub({
     onCreateProject(newProject);
   };
 
-  const handleMonitorActiveDirect = () => {
-    // Direct launch into the active drilling well (KG Basin D6)
-    const activeProject = workflowProjects[0];
-    onSelectProject(activeProject, 'active_well');
-  };
 
-  const handleNewPlanningDirect = () => {
-    // Direct launch into the planning workflow
-    const planningProject = workflowProjects[1];
-    onSelectProject(planningProject, 'planning');
-  };
 
   return (
     <div className="project-hub-overlay" onClick={onClose}>
@@ -184,38 +175,20 @@ export default function ProjectHub({
         <div className="ertmac-actions-bar">
           <button 
             className="btn-main-action btn-action-plan"
-            onClick={handleNewPlanningDirect}
+            onClick={() => onOpenWellOffset ? onOpenWellOffset() : setShowCreateModal(true)}
+            style={{ width: '100%', justifyContent: 'center' }}
           >
-            <Compass size={18} color="#C0AA8A" />
+            <Plus size={18} color="#C0AA8A" />
             <div className="action-text-col">
-              <span className="action-title">＋ New Well Planning</span>
-              <span className="action-sub">Candidate scouting &amp; constraints</span>
+              <span className="action-title">Create Project</span>
+              <span className="action-sub">Initialize custom well prospect</span>
             </div>
-          </button>
-
-          <button 
-            className="btn-main-action btn-action-monitor"
-            onClick={handleMonitorActiveDirect}
-          >
-            <div className="pulse-indicator-red" />
-            <div className="action-text-col">
-              <span className="action-title">Monitor Active Well</span>
-              <span className="action-sub">KG Basin D6 &bull; Real-time telemetry</span>
-            </div>
-            <ArrowRight size={16} className="action-arrow" />
           </button>
         </div>
 
         {/* Existing Projects Section Header */}
         <div className="ertmac-section-head">
           <h2 className="section-title-label">Existing Projects</h2>
-          <button 
-            className="btn-create-toggle"
-            onClick={() => setShowCreateModal(true)}
-          >
-            <Plus size={14} />
-            <span>Custom Project</span>
-          </button>
         </div>
 
         {/* 4 Workflow-State Cards Grid */}
@@ -228,7 +201,7 @@ export default function ProjectHub({
               <div 
                 key={p.id}
                 className={`ertmac-project-card status-${p.statusType}`}
-                onClick={() => onSelectProject(p, p.defaultScreen)}
+                onClick={() => onSelectProject(p, 'active_well')}
                 role="button"
                 tabIndex={0}
               >

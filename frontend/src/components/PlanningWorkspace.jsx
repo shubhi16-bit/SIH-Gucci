@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Compass, 
   MapPin, 
@@ -8,11 +8,97 @@ import {
   AlertTriangle, 
   ArrowRight, 
   Layers, 
-  Sliders 
+  Sliders,
+  RefreshCw 
 } from 'lucide-react';
+import { fetchPlanningCandidates, tryBackend } from '../data/apiClient';
+
+// Reference point inside the Volve cluster used for the demo prospects.
+const DEFAULT_REFERENCE = { lat: 58.437, lng: 1.873, name: 'Proposed Well (15/9 block)' };
+const DEFAULT_DEPTH = 3200;
+
+const MOCK_CANDIDATES = [
+  {
+    id: 'B', rank: '#1', code: 'LOC-B', name: 'Candidate Location B', isRecommended: true,
+    score: 82, formation: 'Strong (Fatehgarh / Forties Sandstone)',
+    offsetCoverage: 'High (5 offset wells correlated)', historicalRisk: 'Low (0 major fault intersections)',
+    targetDepth: '3,200 m', inclination: 'Max 24° deviation build',
+    surfaceAccess: 'Direct access via primary rig road corridor (1.2 km)', x: 210, y: 110,
+    pros: ['Optimal offset well density within 2 km radius', 'Seismic reflector indicates uniform structural thickness', 'Clearance exceeds 400m from historical blowout zone']
+  },
+  {
+    id: 'A', rank: '#2', code: 'LOC-A', name: 'Candidate Location A', isRecommended: false,
+    score: 74, formation: 'Moderate (Interbedded Shale / Sand)',
+    offsetCoverage: 'Medium (3 offset wells)', historicalRisk: 'Medium (Minor fault proximity)',
+    targetDepth: '3,150 m', inclination: 'Max 28° deviation build',
+    surfaceAccess: 'Requires 3.4 km secondary rig pad extension', x: 110, y: 70,
+    pros: ['Proximity to existing gathering facility', 'Proven seal integrity across overlying caprock']
+  },
+  {
+    id: 'C', rank: '#3', code: 'LOC-C', name: 'Candidate Location C', isRecommended: false,
+    score: 61, formation: 'Uncertain (Marginal sand facies)',
+    offsetCoverage: 'Low (Sparse historical control)', historicalRisk: 'Elevated (Pore pressure transition zone)',
+    targetDepth: '3,400 m', inclination: 'Max 34° high-dogleg profile',
+    surfaceAccess: 'Steep terrain slope requiring pad grading', x: 120, y: 165,
+    pros: ['Explores potential high-upside reservoir compartment']
+  }
+];
+
+function formatDepth(m) {
+  return m ? `${Number(m).toLocaleString('en-US')} m` : '—';
+}
+
+function kmAway(m) {
+  if (!m && m !== 0) return '—';
+  const km = Number(m) / 1000;
+  return km >= 1 ? `${km.toFixed(1)} km` : `${Math.floor(Number(m))} m`;
+}
+
+/**
+ * Map a backend candidate object into the display shape used by the workspace UI.
+ * x/y are deterministic positions inside the SVG viewBox (380 x 230).
+ */
+function toDisplayCandidate(cand, idx) {
+  const overall = cand?.scores?.overall ?? 0;
+  const risk = cand?.risk_profile || {};
+  const positive = cand?.positive_factors || [];
+  const negative = cand?.negative_factors || [];
+  const insights = risk.insights || [];
+  const id = `C${idx + 1}`;
+  const x = 110 + (idx % 3) * 50;
+  const y = 70 + (idx % 3) * 47;
+
+  return {
+    id,
+    rank: `#${idx + 1}`,
+    code: cand?.candidate_id || `LOC-${id}`,
+    name: `Candidate Location ${id}`,
+    isRecommended: idx === 0,
+    score: overall,
+    formation: (cand?.closest_well ? `Offset cluster: ${cand.closest_well} (${kmAway(cand.closest_dist)} away)` : 'No offset control detected'),
+    offsetCoverage: positive[0] ? positive[0] : 'Adequate spacing maintained',
+    historicalRisk: `${risk.level || 'LOW'} — ${risk.label || 'No comparable incident density near target'}`,
+    targetDepth: formatDepth(cand?.target_depth),
+    inclination: (cand?.trajectory_estimate?.[1]?.inclination ?? 0) > 0
+      ? `Max ${cand.trajectory_estimate[1].inclination}° deviation profile`
+      : 'Simple near-vertical trajectory estimated',
+    surfaceAccess: cand ? `Lat ${cand.lat?.toFixed(4)}°, Lon ${cand.lon?.toFixed(4)}° in prospect polygon` : '—',
+    x, y,
+    pros: insights.length ? insights : [
+      positive[1] || 'Satisfies hard spatial constraints',
+      negative.length ? `Watch: ${negative[0]}` : 'No blocking negative factors returned'
+    ],
+    evidence_count: risk.evidence_count ?? 0,
+    lat: cand?.lat,
+    lon: cand?.lon,
+  };
+}
 
 export default function PlanningWorkspace({ project, onOpenModal }) {
   const [selectedCandidate, setSelectedCandidate] = useState('B');
+  const [candidates, setCandidates] = useState(MOCK_CANDIDATES);
+  const [apiStatus, setApiStatus] = useState('checking'); // 'live' | 'mock' | 'checking'
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Constraints checklist state
   const [constraints, setConstraints] = useState({
@@ -22,74 +108,47 @@ export default function PlanningWorkspace({ project, onOpenModal }) {
     wellSpacing: true
   });
 
-  const candidates = [
-    {
-      id: 'B',
-      rank: '#1',
-      name: 'Candidate Location B',
-      code: 'LOC-B',
-      isRecommended: true,
-      score: 82,
-      formation: 'Strong (Fatehgarh / Forties Sandstone)',
-      offsetCoverage: 'High (5 offset wells correlated)',
-      historicalRisk: 'Low (0 major fault intersections)',
-      targetDepth: '3,200 m',
-      inclination: 'Max 24° deviation build',
-      surfaceAccess: 'Direct access via primary rig road corridor (1.2 km)',
-      x: 210,
-      y: 110,
-      pros: [
-        'Optimal offset well density within 2 km radius',
-        'Seismic reflector indicates uniform structural thickness',
-        'Clearance exceeds 400m from historical blowout zone'
-      ]
-    },
-    {
-      id: 'A',
-      rank: '#2',
-      name: 'Candidate Location A',
-      code: 'LOC-A',
-      isRecommended: false,
-      score: 74,
-      formation: 'Moderate (Interbedded Shale / Sand)',
-      offsetCoverage: 'Medium (3 offset wells)',
-      historicalRisk: 'Medium (Minor fault proximity)',
-      targetDepth: '3,150 m',
-      inclination: 'Max 28° deviation build',
-      surfaceAccess: 'Requires 3.4 km secondary rig pad extension',
-      x: 110,
-      y: 70,
-      pros: [
-        'Proximity to existing gathering facility',
-        'Proven seal integrity across overlying caprock'
-      ]
-    },
-    {
-      id: 'C',
-      rank: '#3',
-      name: 'Candidate Location C',
-      code: 'LOC-C',
-      isRecommended: false,
-      score: 61,
-      formation: 'Uncertain (Marginal sand facies)',
-      offsetCoverage: 'Low (Sparse historical control)',
-      historicalRisk: 'Elevated (Pore pressure transition zone)',
-      targetDepth: '3,400 m',
-      inclination: 'Max 34° high-dogleg profile',
-      surfaceAccess: 'Steep terrain slope requiring pad grading',
-      x: 120,
-      y: 165,
-      pros: [
-        'Explores potential high-upside reservoir compartment'
-      ]
+  const loadCandidates = useCallback(async (spacingOverride) => {
+    setIsRefreshing(true);
+    const spacing = spacingOverride != null
+      ? spacingOverride
+      : (constraints.wellSpacing ? 500 : 0);
+    const payload = {
+      reference: DEFAULT_REFERENCE,
+      target_depth: DEFAULT_DEPTH,
+      formation: project?.formation || 'HUGIN FM',
+      constraints: { minimum_well_spacing: spacing || 100 },
+    };
+    const res = await tryBackend(() => fetchPlanningCandidates(payload));
+    if (res.ok && res.data.candidates && res.data.candidates.length) {
+      const mapped = res.data.candidates.map(toDisplayCandidate);
+      setCandidates(mapped);
+      setSelectedCandidate(mapped[0]?.id || 'C1');
+      setApiStatus('live');
+    } else {
+      setCandidates(MOCK_CANDIDATES);
+      setSelectedCandidate('B');
+      setApiStatus('mock');
     }
-  ];
+    setIsRefreshing(false);
+  }, [constraints.wellSpacing, project?.formation]);
 
-  const current = candidates.find(c => c.id === selectedCandidate) || candidates[0];
+  useEffect(() => {
+    loadCandidates();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const toggleConstraint = (key) => {
-    setConstraints(prev => ({ ...prev, [key]: !prev[key] }));
+    setConstraints(prev => {
+      const next = { ...prev, [key]: !prev[key] };
+      if (key === 'wellSpacing' || key === 'existingWells') {
+        loadCandidates(next.wellSpacing ? 500 : 100);
+      }
+      return next;
+    });
   };
+
+  const current = candidates.find(c => c.id === selectedCandidate) || candidates[0];
 
   return (
     <div className="planning-workspace-layout">
@@ -105,6 +164,17 @@ export default function PlanningWorkspace({ project, onOpenModal }) {
             <Compass size={15} color="#8F7C3A" />
             <span>Target Prospect: {project?.name || "Rajasthan Block A"}</span>
           </div>
+          <button
+            className={`api-status-button status-${apiStatus}`}
+            onClick={() => loadCandidates()}
+            disabled={isRefreshing}
+            title={apiStatus === 'live' ? 'Connected to NWIS backend API' : 'Backend unreachable — showing demo data'}
+          >
+            {isRefreshing
+              ? <RefreshCw size={13} className="spin" />
+              : <span className="status-dot" />}
+            <span>{apiStatus === 'live' ? 'Live API' : apiStatus === 'mock' ? 'Demo data' : 'Connecting…'}</span>
+          </button>
         </div>
       </div>
 
@@ -124,7 +194,6 @@ export default function PlanningWorkspace({ project, onOpenModal }) {
 
             <div className="interactive-plan-map">
               <svg viewBox="0 0 380 230" className="plan-map-svg">
-                {/* Background Grid */}
                 <defs>
                   <pattern id="plan-grid" width="25" height="25" patternUnits="userSpaceOnUse">
                     <path d="M 25 0 L 0 0 0 25" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
@@ -132,7 +201,6 @@ export default function PlanningWorkspace({ project, onOpenModal }) {
                 </defs>
                 <rect width="100%" height="100%" fill="url(#plan-grid)" />
 
-                {/* Exclusion Zone Poly (conditionally rendered) */}
                 {constraints.exclusionZones && (
                   <g className="exclusion-zone-group">
                     <polygon 
@@ -145,7 +213,6 @@ export default function PlanningWorkspace({ project, onOpenModal }) {
                   </g>
                 )}
 
-                {/* Existing Offset Wells (conditionally rendered) */}
                 {constraints.existingWells && (
                   <g className="offset-wells-layer">
                     <circle cx="70" cy="110" r="5" fill="#3B82F6" stroke="#FFF" strokeWidth="1.5" />
@@ -159,47 +226,32 @@ export default function PlanningWorkspace({ project, onOpenModal }) {
                   </g>
                 )}
 
-                {/* Formation target boundary */}
                 {constraints.formationTarget && (
                   <ellipse cx="190" cy="120" rx="140" ry="75" fill="none" stroke="rgba(143,124,58,0.25)" strokeWidth="2" strokeDasharray="6 4" />
                 )}
 
-                {/* Candidate A Marker */}
-                <g 
-                  className={`candidate-marker ${selectedCandidate === 'A' ? 'active-candidate' : ''}`}
-                  onClick={() => setSelectedCandidate('A')}
-                  transform="translate(110, 70)"
-                  style={{ cursor: 'pointer' }}
-                >
-                  <circle r={selectedCandidate === 'A' ? 14 : 10} fill={selectedCandidate === 'A' ? '#8F7C3A' : '#1A1817'} stroke="#C0AA8A" strokeWidth="2" />
-                  <text x="0" y="4" textAnchor="middle" fill="#FFFFFF" fontSize="10" fontWeight="bold">A</text>
-                  <text x="16" y="4" fill="#D4D4D8" fontSize="10" fontWeight="600">Candidate A (74)</text>
-                </g>
-
-                {/* Candidate B Marker (Recommended ★) */}
-                <g 
-                  className={`candidate-marker ${selectedCandidate === 'B' ? 'active-candidate' : ''}`}
-                  onClick={() => setSelectedCandidate('B')}
-                  transform="translate(210, 110)"
-                  style={{ cursor: 'pointer' }}
-                >
-                  <circle r="18" fill="rgba(143,124,58,0.25)" className="pulse-ring" />
-                  <circle r={selectedCandidate === 'B' ? 16 : 12} fill="#8F7C3A" stroke="#FFFFFF" strokeWidth="2.5" />
-                  <text x="0" y="4" textAnchor="middle" fill="#FFFFFF" fontSize="11" fontWeight="bold">★ B</text>
-                  <text x="22" y="4" fill="#FFFFFF" fontSize="11" fontWeight="bold">Candidate B (82) [REC]</text>
-                </g>
-
-                {/* Candidate C Marker */}
-                <g 
-                  className={`candidate-marker ${selectedCandidate === 'C' ? 'active-candidate' : ''}`}
-                  onClick={() => setSelectedCandidate('C')}
-                  transform="translate(120, 165)"
-                  style={{ cursor: 'pointer' }}
-                >
-                  <circle r={selectedCandidate === 'C' ? 14 : 10} fill={selectedCandidate === 'C' ? '#8F7C3A' : '#1A1817'} stroke="#A1A1AA" strokeWidth="2" />
-                  <text x="0" y="4" textAnchor="middle" fill="#FFFFFF" fontSize="10" fontWeight="bold">C</text>
-                  <text x="16" y="4" fill="#9CA3AF" fontSize="10" fontWeight="600">Candidate C (61)</text>
-                </g>
+                {candidates.map((c) => (
+                  <g 
+                    key={c.id}
+                    className={`candidate-marker ${selectedCandidate === c.id ? 'active-candidate' : ''}`}
+                    onClick={() => setSelectedCandidate(c.id)}
+                    transform={`translate(${c.x}, ${c.y})`}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {c.isRecommended && <circle r="18" fill="rgba(143,124,58,0.25)" className="pulse-ring" />}
+                    <circle r={selectedCandidate === c.id ? (c.isRecommended ? 16 : 14) : (c.isRecommended ? 12 : 10)}
+                      fill={selectedCandidate === c.id ? '#8F7C3A' : '#1A1817'}
+                      stroke={c.isRecommended ? '#FFFFFF' : '#C0AA8A'}
+                      strokeWidth="2"
+                    />
+                    <text x="0" y="4" textAnchor="middle" fill="#FFFFFF" fontSize="10" fontWeight="bold">
+                      {c.isRecommended ? '★' : c.id}
+                    </text>
+                    <text x="18" y="4" fill="#D4D4D8" fontSize="10" fontWeight="600">
+                      {c.name.replace('Candidate Location ', 'Candidate ')} ({c.score})
+                    </text>
+                  </g>
+                ))}
               </svg>
 
               <div className="plan-map-legend">
@@ -262,7 +314,7 @@ export default function PlanningWorkspace({ project, onOpenModal }) {
                 {constraints.wellSpacing ? <CheckSquare size={16} color="#8F7C3A" /> : <Square size={16} color="#71717A" />}
                 <div className="ct-text">
                   <strong>Well spacing</strong>
-                  <span>Minimum 800m reservoir drainage spacing</span>
+                  <span>Minimum 500m reservoir drainage spacing</span>
                 </div>
               </div>
             </div>
@@ -278,7 +330,9 @@ export default function PlanningWorkspace({ project, onOpenModal }) {
                 <Compass size={16} color="#8F7C3A" />
                 <span>CANDIDATE LOCATIONS RANKING</span>
               </div>
-              <span className="pcard-count">3 Scored</span>
+              <span className="pcard-count">
+                {apiStatus === 'live' ? `${candidates.length} Scored (API)` : '3 Demo Scored'}
+              </span>
             </div>
 
             <div className="candidate-ranking-list">
@@ -329,8 +383,8 @@ export default function PlanningWorkspace({ project, onOpenModal }) {
 
             <div className="candidate-factor-grid">
               <div className="factor-box">
-                <span className="factor-lbl">Formation Target</span>
-                <span className="factor-val text-green">{current.formation}</span>
+                <span className="factor-lbl">Formation / Offset Cluster</span>
+                <span className="factor-val text-gold">{current.formation}</span>
               </div>
 
               <div className="factor-box">
@@ -344,7 +398,7 @@ export default function PlanningWorkspace({ project, onOpenModal }) {
               </div>
 
               <div className="factor-box">
-                <span className="factor-lbl">Surface Accessibility</span>
+                <span className="factor-lbl">Surface Location</span>
                 <span className="factor-val">{current.surfaceAccess}</span>
               </div>
             </div>
@@ -366,7 +420,7 @@ export default function PlanningWorkspace({ project, onOpenModal }) {
               onClick={() => onOpenModal({
                 title: `Trajectory Specification: ${current.name}`,
                 subtitle: `Target: ${current.targetDepth} &bull; Score: ${current.score}/100`,
-                content: `Generating directional survey and casing program for ${current.name}.\n\n• Kickoff Point (KOP): 600m MD\n• Build Rate: 2.5°/30m to reach 24° inclination\n• Casing Strings: 20" Conductor @ 150m, 13-3/8" Surface @ 900m, 9-5/8" Intermediate @ 2,400m, 7" Production Liner @ 3,200m.\n• Anti-collision check: Verified against 5 offset wells with minimum separation factor > 2.5.`
+                content: `Generating directional survey and casing program for ${current.name}.\n\n${current.inclination}\n• Anti-collision check: proximity to ${current.offsetCoverage}\n• Historical risk corridor: ${current.historicalRisk}\n• ${apiStatus === 'live' ? 'Results computed live by the NWIS Planning Engine.' : 'Demo data: results cached for offline review.'}`
               })}
             >
               <Compass size={16} />

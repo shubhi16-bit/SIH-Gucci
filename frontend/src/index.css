@@ -122,3 +122,58 @@ input, select, textarea {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--brand-primary);
 }
+
+/* --------------------------------------------------------------------------
+   WellOffset (map / well-offset explorer) color system
+   Scoped to the .welloffset-page wrapper so it never leaks into the rest
+   of the NWIS console. Dark is the default; light is set via [data-theme].
+-------------------------------------------------------------------------- */
+.welloffset-page {
+  --w-bg: #0b0d0a;
+  --w-panel: #10130f;
+  --w-panel2: #0c0f0c;
+  --w-border: #262626;
+  --w-border2: #3a3a3a;
+  --w-text: #f0f0ef;
+  --w-muted: #a3a3a3;
+  --w-pale: #d4d4d4;
+  --w-accent: #aabe53;
+  --w-accent2: #8c9e3a;
+  --w-on-accent: #11150a;
+  --w-accent-soft: rgba(170, 190, 83, 0.14);
+  --w-row: rgba(255, 255, 255, 0.03);
+}
+
+.welloffset-page[data-theme="light"] {
+  --w-bg: #f6f6f1;
+  --w-panel: #ffffff;
+  --w-panel2: #f2f2ec;
+  --w-border: #e2ddd0;
+  --w-border2: #cfc9b8;
+  --w-text: #1f2217;
+  --w-muted: #6f7352;
+  --w-pale: #8f9671;
+  --w-accent: #8c9e3a;
+  --w-accent2: #6f7f2f;
+  --w-on-accent: #ffffff;
+  --w-accent-soft: rgba(140, 158, 58, 0.12);
+  --w-row: #f7f7f2;
+}
+
+/* Responsive helper classes used by the wizard */
+@media (min-width: 1024px) {
+  .welloffset-mapgrid { grid-template-columns: minmax(0, 1fr) 300px !important; }
+  .welloffset-layout { flex-direction: row !important; }
+}
+@media (min-width: 640px) {
+  .welloffset-aside { width: 240px !important; }
+  .welloffset-hint { flex-direction: row !important; }
+  .welloffset-hint > div:last-child { margin-left: auto; }
+}
+
+/* scrollbar for well lists inside the wizard */
+.welloffset-scroll::-webkit-scrollbar { width: 6px; }
+.welloffset-scroll::-webkit-scrollbar-thumb {
+  background: var(--w-border2);
+  border-radius: 3px;
+}

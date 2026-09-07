@@ -1578,7 +1578,7 @@
 /* Operational Actions Strip */
 .ertmac-actions-bar {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 16px;
   margin-bottom: 28px;
 }

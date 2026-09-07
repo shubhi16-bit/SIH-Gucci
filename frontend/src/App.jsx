@@ -5,11 +5,12 @@ import StreamlinedFeatures from './components/StreamlinedFeatures';
 import LoginModal from './components/LoginModal';
 import ProjectHub from './components/ProjectHub';
 import EngineeringConsole from './components/EngineeringConsole';
+import WellOffsetWizard from './components/WellOffsetWizard';
 import ActionModal from './components/ActionModal';
 import Footer from './components/Footer';
 
 export default function App() {
-  // Navigation View: 'landing' | 'project_hub' | 'console'
+  // Navigation View: 'landing' | 'project_hub' | 'offset' | 'console'
   const [view, setView] = useState('landing');
   
   // Authentication State
@@ -110,13 +111,56 @@ export default function App() {
 
   const handleSelectProject = (project, targetScreen = 'active_well') => {
     setCurrentProject(project);
-    setActiveConsoleTab(targetScreen || project.defaultScreen || 'active_well');
+    setActiveConsoleTab(targetScreen || 'active_well');
     setView('console');
   };
 
   const handleCreateProject = (newProject) => {
     setCurrentProject(newProject);
-    setActiveConsoleTab('planning');
+    setActiveConsoleTab('offsets');
+    setView('console');
+  };
+
+  const handleOpenWellOffset = () => {
+    setCurrentProject({
+      id: 'new-offset',
+      name: 'New Prospect',
+      field: 'Upper Assam Basin',
+      formation: 'Tipam Sandstone',
+      status: 'PLANNING',
+      statusType: 'planning',
+      workflowType: 'New Exploration Area',
+      depthDisplay: 'Target: TBD',
+      depth: '',
+      targetDepth: '',
+      risk: 'LOW',
+      riskLevel: 'low',
+      offsetWells: 'Search for nearby wells',
+      defaultScreen: 'active_well',
+    });
+    setView('offset');
+  };
+
+  const handleOffsetToDashboard = (createdProject) => {
+    setCurrentProject({
+      id: createdProject?.id || 'wis-project',
+      name: createdProject?.reference?.name?.split(',')[0] || 'New Prospect',
+      field: 'Upper Assam Basin',
+      formation: createdProject?.inspectedWell?.formation || 'Tipam Sandstone',
+      status: 'PLANNING',
+      statusType: 'planning',
+      workflowType: 'New Exploration Area',
+      depthDisplay: createdProject?.inspectedWell
+        ? `Surveyed: ${createdProject.inspectedWell.depth.toLocaleString()} m`
+        : 'Target: TBD',
+      depth: '',
+      targetDepth: '',
+      risk: createdProject?.inspectedWell?.risk?.toUpperCase() || 'LOW',
+      riskLevel: createdProject?.inspectedWell?.risk || 'low',
+      offsetWells: `${createdProject?.candidates?.length ?? 0} Candidate(s)`,
+      defaultScreen: 'active_well',
+    });
+    setActiveConsoleTab('active_well');
     setView('console');
   };
 
@@ -142,6 +186,12 @@ export default function App() {
           user={user}
           theme={theme}
           onToggleTheme={handleToggleTheme}
+        />
+      ) : view === 'offset' ? (
+        /* Well Offset / map-based project explorer */
+        <WellOffsetWizard
+          theme={theme}
+          onGoDashboard={handleOffsetToDashboard}
         />
       ) : (
         /* Minimal Landing Page */
@@ -181,6 +231,7 @@ export default function App() {
           user={user}
           onSelectProject={handleSelectProject}
           onCreateProject={handleCreateProject}
+          onOpenWellOffset={handleOpenWellOffset}
           onClose={() => setView('landing')}
           onLogout={handleLogout}
           theme={theme}
