@@ -1011,12 +1011,14 @@ class SimilarityEngine:
     def similarity_report(
         self,
         current,
-        top_k=5
+        top_k=5,
+        exclude_name=None
     ):
 
         rankings = self.rank_wells(
             current,
-            top_k
+            top_k,
+            exclude_name=exclude_name
         )
 
         report = []

@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Sparkles, X, Send, Bot, User, ArrowRight, FileText, AlertTriangle } from 'lucide-react';
+import { askChatbot, tryBackend } from '../data/apiClient';
 
 export default function AIAssistantDrawer({ isOpen, onToggle, initialQuery, onOpenModal }) {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      text: 'Hello Engineer. I am monitoring active well 15/9-F-1 and indexing 1,420 historical Daily Drilling Reports. How can I assist your operational decisions?'
+      text: 'Hello Engineer. I am monitoring active well 15/9-F-1 and indexing 1,604 historical Daily Drilling Reports. How can I assist your operational decisions?'
     }
   ]);
   const [inputVal, setInputVal] = useState('');
@@ -18,7 +19,7 @@ export default function AIAssistantDrawer({ isOpen, onToggle, initialQuery, onOp
     "What mud weight was used in 15/9-19 A?"
   ];
 
-  const handleSend = (textToSend) => {
+  const handleSend = async (textToSend) => {
     const query = textToSend || inputVal;
     if (!query.trim()) return;
 
@@ -27,19 +28,28 @@ export default function AIAssistantDrawer({ isOpen, onToggle, initialQuery, onOp
     setInputVal('');
     setIsTyping(true);
 
-    setTimeout(() => {
-      let reply = "";
+    const res = await tryBackend(() => askChatbot({
+      question: query,
+      current_well: '15/9-F-1',
+      current_depth: 2150,
+      area: null
+    }));
+
+    let reply = "";
+    if (res.ok && res.data && res.data.answer) {
+      reply = res.data.answer;
+    } else {
       if (query.toLowerCase().includes("high risk") || query.toLowerCase().includes("stuck pipe")) {
-        reply = "Active well 15/9-F-1 is classified as HIGH RISK (0.86) because torque micro-spikes (increasing from 4.8 to 8.4 kN·m at 2,145m) and ROP deceleration closely match the pre-sticking signature documented in offset well 15/9-19 A [DDR Day 43 at 2,162m MD]. Recommended action: elevate pump rate to clear cuttings and maintain string rotation.";
+        reply = "Active well 15/9-F-1 shows torque micro-spikes (increasing from 4.8 to 8.4 kN·m at 2,145m) and ROP deceleration resembling the pre-sticking signature documented in offset well 15/9-19 A [DDR Day 43 at 2,162m MD]. Recommended action: elevate pump rate to clear cuttings and maintain string rotation.";
       } else if (query.toLowerCase().includes("lost circulation") || query.toLowerCase().includes("mud loss")) {
         reply = "In the 2,000m–2,500m window, offset well 15/9-19 A experienced 35 bbl/hr mud loss at 2,241m in the Horda transition, requiring a 50 bbl high-viscosity LCM pill [DDR #43]. Offset 15/9-F-7 also noted 15 bbl/hr seepage at 1,900m.";
       } else {
         reply = `Analyzing offset database for "${query}". Analogues 15/9-19 A, 15/9-F-5, and 15/9-F-4 suggest maintaining synthetic-based mud at 1.28 SG with minimum annular velocity > 120 ft/min across Forties Sandstone.`;
       }
+    }
 
-      setMessages(prev => [...prev, { role: 'assistant', text: reply }]);
-      setIsTyping(false);
-    }, 500);
+    setMessages(prev => [...prev, { role: 'assistant', text: reply }]);
+    setIsTyping(false);
   };
 
   return (
@@ -76,7 +86,7 @@ export default function AIAssistantDrawer({ isOpen, onToggle, initialQuery, onOp
                 </div>
                 <div>
                   <h3 className="ai-head-title">Ask eRTMAC Assistant</h3>
-                  <span className="ai-head-sub">Context-Aware Drilling Support &bull; DDR Ground Truth</span>
+                  <span className="ai-head-sub">Context-Aware Drilling Support &bull; Historical DDR Records</span>
                 </div>
               </div>
 
@@ -92,7 +102,7 @@ export default function AIAssistantDrawer({ isOpen, onToggle, initialQuery, onOp
             {/* Current Well Context Badge */}
             <div className="ai-context-banner">
               <div className="pulse-indicator-green" />
-              <span>ACTIVE CONTEXT: 15/9-F-1 &bull; Depth: 2,150m &bull; Forties Sandstone</span>
+              <span>ACTIVE CONTEXT: 15/9-F-1 &bull; Depth: 2,150m &bull; Formation info where available (Forties Sandstone)</span>
             </div>
 
             {/* Chat Conversation Stream */}

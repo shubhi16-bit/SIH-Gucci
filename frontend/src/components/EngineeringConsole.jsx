@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import ActiveWellMonitor from './ActiveWellMonitor';
 import PlanningWorkspace from './PlanningWorkspace';
+import WellMapExplorer from './WellMapExplorer';
 import OffsetIntelligence from './OffsetIntelligence';
 import HistoricalExplorer from './HistoricalExplorer';
 import AIAssistantDrawer from './AIAssistantDrawer';
@@ -48,6 +49,13 @@ export default function EngineeringConsole({
       icon: Compass, 
       tag: 'Candidate Ranking',
       indicatorColor: '#8F7C3A' 
+    },
+    { 
+      id: 'map', 
+      label: 'Map Explorer', 
+      icon: MapPin, 
+      tag: 'Geospatial Radar',
+      indicatorColor: '#F59E0B' 
     },
     { 
       id: 'offsets', 
@@ -205,21 +213,36 @@ export default function EngineeringConsole({
             <PlanningWorkspace 
               project={project}
               onOpenModal={onOpenModal}
+              onNavigateToMap={() => onTabChange('map')}
+              onNavigateToOffsets={() => onTabChange('offsets')}
             />
           )}
 
-          {/* Screen 3: Offset Intelligence & Similarity */}
+          {/* Screen 3: Geospatial Map Explorer */}
+          {activeTab === 'map' && (
+            <WellMapExplorer
+              project={project}
+              onNavigateToOffsets={(wellId) => onTabChange('offsets')}
+              onNavigateToHistory={(wellId) => onTabChange('historical')}
+              onNavigateToPlanning={() => onTabChange('planning')}
+              onOpenModal={onOpenModal}
+            />
+          )}
+
+          {/* Screen 4: Offset Intelligence & Similarity */}
           {activeTab === 'offsets' && (
             <OffsetIntelligence 
               project={project}
               onOpenModal={onOpenModal}
+              onNavigateToHistory={() => onTabChange('historical')}
             />
           )}
 
-          {/* Screen 4: Historical Event Explorer */}
+          {/* Screen 5: Historical Event Explorer */}
           {activeTab === 'historical' && (
             <HistoricalExplorer 
               onOpenModal={onOpenModal}
+              onNavigateToActive={() => onTabChange('active_well')}
             />
           )}
         </main>

@@ -1,101 +1,561 @@
-export const FORMATIONS = ["Barail", "Tipam", "Langpar", "Girujan", "Kopili", "Disang"];
+/**
+ * Real Volve 15/9 Well Metadata Source
+ * Sourced directly from data/processed/volve_well_metadata.csv (28 real Volve wellbores).
+ */
 
-const STATUS_POOL = [
-  "completed",
-  "completed",
-  "completed",
-  "drilling",
-  "drilling",
-  "planning",
-  "planning",
-  "suspended",
+export const VOLVE_CENTER = {
+  latitude: 58.4416,
+  longitude: 1.8875,
+  zoom: 9.5,
+};
+
+export const FORMATIONS = [
+  "SMITH BANK FM",
+  "HUGIN FM",
+  "SKAGERRAK FM",
+  "LISTA FM",
+  "DRAUPNE FM",
+  "SHALE / SANDSTONE",
 ];
 
-const FIELDS = [
-  { prefix: "NH", name: "Nahorkatia", lat: 27.2906, lng: 95.3336, count: 10 },
-  { prefix: "DJ", name: "Duliajan", lat: 27.333, lng: 95.32, count: 9 },
-  { prefix: "LG", name: "Lakwa", lat: 27.2651, lng: 95.3107, count: 7 },
-  { prefix: "MN", name: "Moran", lat: 27.3122, lng: 95.3031, count: 6 },
-  { prefix: "DK", name: "Dikom", lat: 27.2419, lng: 95.3792, count: 4 },
-  { prefix: "HG", name: "Hapjan", lat: 27.2783, lng: 95.2728, count: 4 },
-];
-
-function mulberry32(seed) {
-  let a = seed;
-  return () => {
-    a |= 0;
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-const rng = mulberry32(20260419);
-
-function buildWells() {
-  const wells = [];
-  for (const f of FIELDS) {
-    for (let i = 0; i < f.count; i++) {
-      const status = STATUS_POOL[Math.floor(rng() * STATUS_POOL.length)];
-      const stuckPipeRisk = Math.round(8 + rng() * 78);
-      const mudLossRisk = Math.round(12 + rng() * 72);
-      const risk = stuckPipeRisk > 60 ? "high" : stuckPipeRisk > 38 ? "medium" : "low";
-      const id = `${f.prefix}-${String(i + 1).padStart(3, "0")}`;
-      wells.push({
-        id,
-        name: `${f.name} ${f.prefix}-${String(i + 1).padStart(3, "0")}`,
-        status,
-        lat: Number((f.lat + (rng() - 0.5) * 0.055).toFixed(4)),
-        lng: Number((f.lng + (rng() - 0.5) * 0.055).toFixed(4)),
-        depth: Math.round(2600 + rng() * 2800),
-        formation: FORMATIONS[Math.floor(rng() * FORMATIONS.length)],
-        risk,
-        stuckPipeRisk,
-        mudLossRisk,
-      });
-    }
-  }
-  wells[3] = {
-    ...wells[3],
-    name: "Nahorkatia NH-004",
+export const nearbyWells = [
+  {
+    id: "15/9-19 A",
+    name: "15/9-19 A (Appraisal / Offset)",
+    field: "VOLVE",
+    wellType: "EXPLORATION",
+    status: "completed",
+    lat: 58.44168,
+    lng: 1.88760,
+    depth: 4131,
+    tvd: 3318.7,
+    maxInclination: 61.37,
+    formation: "SMITH BANK FM / HUGIN FM",
     risk: "high",
-    stuckPipeRisk: 76,
+    stuckPipeRisk: 86,
+    mudLossRisk: 62,
+    eventsCount: 30,
+    topEvent: "Stuck Pipe at 2,162m MD (DDR #43)"
+  },
+  {
+    id: "15/9-19 B",
+    name: "15/9-19 B (Offset)",
+    field: "VOLVE",
+    wellType: "EXPLORATION",
+    status: "completed",
+    lat: 58.44168,
+    lng: 1.88760,
+    depth: 3272,
+    tvd: 2511.5,
+    maxInclination: 61.37,
+    formation: "SMITH BANK FM",
+    risk: "medium",
+    stuckPipeRisk: 42,
+    mudLossRisk: 55,
+    eventsCount: 18,
+    topEvent: "Mud Loss at 2,850m MD"
+  },
+  {
+    id: "15/9-19 BT2",
+    name: "15/9-19 BT2 (Exploration Sidetrack)",
+    field: "VOLVE",
+    wellType: "EXPLORATION",
+    status: "completed",
+    lat: 58.44168,
+    lng: 1.88760,
+    depth: 4250,
+    tvd: 3360.6,
+    maxInclination: 61.37,
+    formation: "HUGIN FM",
+    risk: "low",
+    stuckPipeRisk: 22,
+    mudLossRisk: 28,
+    eventsCount: 6,
+    topEvent: "Clean drilling run"
+  },
+  {
+    id: "15/9-19 S",
+    name: "15/9-19 S (Pilot Hole)",
+    field: "VOLVE",
+    wellType: "EXPLORATION",
+    status: "completed",
+    lat: 58.44168,
+    lng: 1.88760,
+    depth: 3580,
+    tvd: 2374.5,
+    maxInclination: 60.5,
+    formation: "LISTA FM",
+    risk: "low",
+    stuckPipeRisk: 18,
+    mudLossRisk: 20,
+    eventsCount: 4,
+    topEvent: "Normal operations"
+  },
+  {
+    id: "15/9-19 SR",
+    name: "15/9-19 SR (Deep Exploration)",
+    field: "VOLVE",
+    wellType: "EXPLORATION",
+    status: "completed",
+    lat: 58.44168,
+    lng: 1.88760,
+    depth: 4644,
+    tvd: 3135.3,
+    maxInclination: 61.37,
+    formation: "SKAGERRAK FM / HUGIN FM",
+    risk: "medium",
+    stuckPipeRisk: 52,
+    mudLossRisk: 48,
+    eventsCount: 14,
+    topEvent: "Tight hole on trip"
+  },
+  {
+    id: "15/9-19 SR2",
+    name: "15/9-19 SR2 (Appraisal Sidetrack)",
+    field: "VOLVE",
+    wellType: "EXPLORATION",
+    status: "completed",
+    lat: 58.43590,
+    lng: 1.92974,
+    depth: 4644,
+    tvd: 3132.0,
+    maxInclination: 55.9,
+    formation: "SKAGERRAK FM / HUGIN FM",
+    risk: "medium",
+    stuckPipeRisk: 45,
+    mudLossRisk: 38,
+    eventsCount: 12,
+    topEvent: "Pack-off tendency"
+  },
+  {
+    id: "15/9-19 ST2",
+    name: "15/9-19 ST2 (Exploration Re-entry)",
+    field: "VOLVE",
+    wellType: "EXPLORATION",
+    status: "completed",
+    lat: 58.44168,
+    lng: 1.88760,
+    depth: 3580,
+    tvd: 2374.5,
+    maxInclination: 60.5,
+    formation: "LISTA FM",
+    risk: "low",
+    stuckPipeRisk: 20,
+    mudLossRisk: 15,
+    eventsCount: 3,
+    topEvent: "Completed to TD"
+  },
+  {
+    id: "15/9-F-1",
+    name: "15/9-F-1 (Active Monitor Well)",
+    field: "VOLVE",
+    wellType: "DEVELOPMENT",
+    status: "drilling",
+    lat: 58.44164,
+    lng: 1.88742,
+    depth: 3632,
+    tvd: 3330.4,
+    maxInclination: 49.5,
+    formation: "HUGIN FM",
+    risk: "high",
+    stuckPipeRisk: 86,
+    mudLossRisk: 40,
+    eventsCount: 22,
+    topEvent: "Torque fluctuation at 2,145m"
+  },
+  {
+    id: "15/9-F-1 A",
+    name: "15/9-F-1 A (Production Well)",
+    field: "VOLVE",
+    wellType: "DEVELOPMENT",
+    status: "completed",
+    lat: 58.44164,
+    lng: 1.88742,
+    depth: 3682,
+    tvd: 3239.7,
+    maxInclination: 63.21,
+    formation: "HUGIN FM",
+    risk: "low",
+    stuckPipeRisk: 25,
+    mudLossRisk: 30,
+    eventsCount: 8,
+    topEvent: "Successful casing run"
+  },
+  {
+    id: "15/9-F-1 B",
+    name: "15/9-F-1 B (Production Well)",
+    field: "VOLVE",
+    wellType: "DEVELOPMENT",
+    status: "completed",
+    lat: 58.44164,
+    lng: 1.88742,
+    depth: 3465,
+    tvd: 3259.9,
+    maxInclination: 30.25,
+    formation: "HUGIN FM",
+    risk: "low",
+    stuckPipeRisk: 18,
+    mudLossRisk: 22,
+    eventsCount: 5,
+    topEvent: "Clean production drill"
+  },
+  {
+    id: "15/9-F-1 C",
+    name: "15/9-F-1 C (High Deviation Producer)",
+    field: "VOLVE",
+    wellType: "DEVELOPMENT",
+    status: "completed",
+    lat: 58.44164,
+    lng: 1.88742,
+    depth: 4094,
+    tvd: 3180.5,
+    maxInclination: 84.06,
+    formation: "HUGIN FM",
+    risk: "medium",
+    stuckPipeRisk: 58,
+    mudLossRisk: 42,
+    eventsCount: 16,
+    topEvent: "High inclination drag"
+  },
+  {
+    id: "15/9-F-10",
+    name: "15/9-F-10 (Extended Reach Producer)",
+    field: "VOLVE",
+    wellType: "DEVELOPMENT",
+    status: "completed",
+    lat: 58.44158,
+    lng: 1.88752,
+    depth: 5331,
+    tvd: 3017.0,
+    maxInclination: 88.09,
+    formation: "HUGIN FM",
+    risk: "high",
+    stuckPipeRisk: 74,
+    mudLossRisk: 60,
+    eventsCount: 28,
+    topEvent: "Severe ERD torque & drag"
+  },
+  {
+    id: "15/9-F-11",
+    name: "15/9-F-11 (Top Hole Section)",
+    field: "VOLVE",
+    wellType: "DEVELOPMENT",
+    status: "completed",
+    lat: 58.44165,
+    lng: 1.88746,
+    depth: 347,
+    tvd: 347.0,
+    maxInclination: 0.7,
+    formation: "SURFACE",
+    risk: "low",
+    stuckPipeRisk: 10,
+    mudLossRisk: 12,
+    eventsCount: 2,
+    topEvent: "Conductor set cleanly"
+  },
+  {
+    id: "15/9-F-11 A",
+    name: "15/9-F-11 A (Production Well)",
+    field: "VOLVE",
+    wellType: "DEVELOPMENT",
+    status: "completed",
+    lat: 58.44165,
+    lng: 1.88746,
+    depth: 3762,
+    tvd: 3126.5,
+    maxInclination: 75.37,
+    formation: "HUGIN FM",
+    risk: "medium",
+    stuckPipeRisk: 62,
+    mudLossRisk: 45,
+    eventsCount: 19,
+    topEvent: "Mechanical pack-off at 2,198m"
+  },
+  {
+    id: "15/9-F-11 B",
+    name: "15/9-F-11 B (Extended Producer)",
+    field: "VOLVE",
+    wellType: "DEVELOPMENT",
+    status: "completed",
+    lat: 58.44165,
+    lng: 1.88746,
+    depth: 4770,
+    tvd: 3257.3,
+    maxInclination: 90.01,
+    formation: "HUGIN FM",
+    risk: "high",
+    stuckPipeRisk: 78,
+    mudLossRisk: 52,
+    eventsCount: 24,
+    topEvent: "Horizontal differential sticking"
+  },
+  {
+    id: "15/9-F-11 T2",
+    name: "15/9-F-11 T2 (Sidetrack Producer)",
+    field: "VOLVE",
+    wellType: "DEVELOPMENT",
+    status: "completed",
+    lat: 58.44165,
+    lng: 1.88746,
+    depth: 4562,
+    tvd: 3400.3,
+    maxInclination: 82.28,
+    formation: "HUGIN FM",
+    risk: "medium",
+    stuckPipeRisk: 50,
+    mudLossRisk: 44,
+    eventsCount: 15,
+    topEvent: "Reamed washouts"
+  },
+  {
+    id: "15/9-F-12",
+    name: "15/9-F-12 (Water Injector)",
+    field: "VOLVE",
+    wellType: "DEVELOPMENT",
+    status: "completed",
+    lat: 58.44164,
+    lng: 1.88748,
+    depth: 3520,
+    tvd: 3108.4,
+    maxInclination: 54.95,
+    formation: "HUGIN FM",
+    risk: "low",
+    stuckPipeRisk: 22,
+    mudLossRisk: 25,
+    eventsCount: 7,
+    topEvent: "Smooth injection conversion"
+  },
+  {
+    id: "15/9-F-14",
+    name: "15/9-F-14 (Production Well)",
+    field: "VOLVE",
+    wellType: "DEVELOPMENT",
+    status: "completed",
+    lat: 58.44160,
+    lng: 1.88752,
+    depth: 3750,
+    tvd: 3158.7,
+    maxInclination: 81.08,
+    formation: "HUGIN FM",
+    risk: "medium",
+    stuckPipeRisk: 48,
+    mudLossRisk: 35,
+    eventsCount: 11,
+    topEvent: "Minor tight hole"
+  },
+  {
+    id: "15/9-F-15",
+    name: "15/9-F-15 (Production Well)",
+    field: "VOLVE",
+    wellType: "DEVELOPMENT",
+    status: "completed",
+    lat: 58.44159,
+    lng: 1.88754,
+    depth: 4090,
+    tvd: 3169.9,
+    maxInclination: 67.69,
+    formation: "HUGIN FM",
+    risk: "low",
+    stuckPipeRisk: 30,
+    mudLossRisk: 24,
+    eventsCount: 9,
+    topEvent: "Casing run to TD"
+  },
+  {
+    id: "15/9-F-15 A",
+    name: "15/9-F-15 A (High Deviation Producer)",
+    field: "VOLVE",
+    wellType: "DEVELOPMENT",
+    status: "completed",
+    lat: 58.44159,
+    lng: 1.88754,
+    depth: 4095,
+    tvd: 3212.1,
+    maxInclination: 85.77,
+    formation: "HUGIN FM",
+    risk: "medium",
+    stuckPipeRisk: 55,
+    mudLossRisk: 40,
+    eventsCount: 13,
+    topEvent: "Torque spikes during rotation"
+  },
+  {
+    id: "15/9-F-15 B",
+    name: "15/9-F-15 B (Production Well)",
+    field: "VOLVE",
+    wellType: "DEVELOPMENT",
+    status: "completed",
+    lat: 58.44159,
+    lng: 1.88754,
+    depth: 3497,
+    tvd: 3016.5,
+    maxInclination: 60.21,
+    formation: "HUGIN FM",
+    risk: "low",
+    stuckPipeRisk: 24,
+    mudLossRisk: 18,
+    eventsCount: 6,
+    topEvent: "Clean drilling run"
+  },
+  {
+    id: "15/9-F-15 C",
+    name: "15/9-F-15 C (Production Well)",
+    field: "VOLVE",
+    wellType: "DEVELOPMENT",
+    status: "completed",
+    lat: 58.44159,
+    lng: 1.88754,
+    depth: 3232,
+    tvd: 3044.1,
+    maxInclination: 33.26,
+    formation: "HUGIN FM",
+    risk: "low",
+    stuckPipeRisk: 15,
+    mudLossRisk: 16,
+    eventsCount: 4,
+    topEvent: "Fast ROP interval"
+  },
+  {
+    id: "15/9-F-15 D",
+    name: "15/9-F-15 D (High Deviation Producer)",
+    field: "VOLVE",
+    wellType: "DEVELOPMENT",
+    status: "completed",
+    lat: 58.44159,
+    lng: 1.88754,
+    depth: 4685,
+    tvd: 3212.3,
+    maxInclination: 82.04,
+    formation: "HUGIN FM",
+    risk: "medium",
+    stuckPipeRisk: 54,
+    mudLossRisk: 39,
+    eventsCount: 17,
+    topEvent: "Hole cleaning circulation"
+  },
+  {
+    id: "15/9-F-4",
+    name: "15/9-F-4 (Production Well / Kick Offset)",
+    field: "VOLVE",
+    wellType: "DEVELOPMENT",
+    status: "completed",
+    lat: 58.44159,
+    lng: 1.88748,
+    depth: 3510,
+    tvd: 3138.1,
+    maxInclination: 55.23,
+    formation: "HUGIN FM",
+    risk: "high",
+    stuckPipeRisk: 65,
+    mudLossRisk: 42,
+    eventsCount: 20,
+    topEvent: "Wellbore kick at 1,840m MD"
+  },
+  {
+    id: "15/9-F-5",
+    name: "15/9-F-5 (Primary Production Reference)",
+    field: "VOLVE",
+    wellType: "DEVELOPMENT",
+    status: "completed",
+    lat: 58.44157,
+    lng: 1.88750,
+    depth: 3792,
+    tvd: 3246.4,
+    maxInclination: 55.13,
+    formation: "HUGIN FM",
+    risk: "low",
+    stuckPipeRisk: 20,
+    mudLossRisk: 22,
+    eventsCount: 8,
+    topEvent: "Benchmark production log"
+  },
+  {
+    id: "15/9-F-7",
+    name: "15/9-F-7 (Shallow Appraisal / Seepage)",
+    field: "VOLVE",
+    wellType: "DEVELOPMENT",
+    status: "completed",
+    lat: 58.44163,
+    lng: 1.88746,
+    depth: 1083,
+    tvd: 1077.5,
+    maxInclination: 9.53,
+    formation: "HUGIN FM",
+    risk: "medium",
+    stuckPipeRisk: 30,
     mudLossRisk: 58,
-  };
-  return wells;
-}
-
-export const nearbyWells = buildWells();
+    eventsCount: 10,
+    topEvent: "Partial fluid loss (15 bbl/hr) at 1,900m"
+  },
+  {
+    id: "15/9-F-9",
+    name: "15/9-F-9 (Top Hole Section)",
+    field: "VOLVE",
+    wellType: "DEVELOPMENT",
+    status: "completed",
+    lat: 58.44160,
+    lng: 1.88750,
+    depth: 1083,
+    tvd: 1075.9,
+    maxInclination: 11.7,
+    formation: "SURFACE",
+    risk: "low",
+    stuckPipeRisk: 12,
+    mudLossRisk: 14,
+    eventsCount: 3,
+    topEvent: "Casing cemented cleanly"
+  },
+  {
+    id: "15/9-F-9 A",
+    name: "15/9-F-9 A (Pilot Sidetrack)",
+    field: "VOLVE",
+    wellType: "DEVELOPMENT",
+    status: "completed",
+    lat: 58.44160,
+    lng: 1.88750,
+    depth: 1206,
+    tvd: 1013.0,
+    maxInclination: 59.07,
+    formation: "HUGIN FM",
+    risk: "low",
+    stuckPipeRisk: 16,
+    mudLossRisk: 18,
+    eventsCount: 4,
+    topEvent: "Completed pilot section"
+  }
+];
 
 export const candidateLocations = [
   {
-    id: "CL-1",
-    name: "Candidate Alpha",
-    lat: 27.2851,
-    lng: 95.3211,
-    distanceKm: 1.4,
-    description:
-      "Optimum structural high. Offset data shows minimal stuck pipe risk in the Tipam formation here. Highly recommended for standard vertical drilling.",
+    id: "CAND-1",
+    name: "Candidate CAND-1",
+    lat: 58.4430,
+    lng: 1.8890,
+    distanceKm: 0.22,
+    closest_well: "15/9-19 A",
+    score: 100,
+    description: "Optimal spatial clearance from 15/9-19 A cluster. High spatial suitability score (100/100).",
   },
   {
-    id: "CL-2",
-    name: "Candidate Beta",
-    lat: 27.3014,
-    lng: 95.2986,
-    distanceKm: 2.8,
-    description:
-      "Secondary structural flank. Proximity to historical mud loss zones requires heavier casing design, but it taps a significantly larger untapped reservoir.",
+    id: "CAND-2",
+    name: "Candidate CAND-2",
+    lat: 58.4400,
+    lng: 1.8860,
+    distanceKm: 0.25,
+    closest_well: "15/9-F-5",
+    score: 85,
+    description: "Southwestern placement offset from 15/9-F-5 production cluster.",
   },
   {
-    id: "CL-3",
-    name: "Candidate Gamma",
-    lat: 27.2588,
-    lng: 95.2902,
-    distanceKm: 3.9,
-    description:
-      "Deep Barail target. High expected pressure (kick risk) based on offset well NH-004. Requires managed pressure drilling but offers massive yield potential.",
-  },
+    id: "CAND-3",
+    name: "Candidate CAND-3",
+    lat: 58.4445,
+    lng: 1.8850,
+    distanceKm: 0.38,
+    closest_well: "15/9-F-1",
+    score: 92,
+    description: "Northwestern boundary location with verified anti-collision clearance.",
+  }
 ];
 
 export const statusColors = {
@@ -114,13 +574,18 @@ export const riskColors = {
 const toRad = (deg) => (deg * Math.PI) / 180;
 
 export function haversineKm(a, b) {
+  if (!a || !b) return 0;
+  const lat1 = Number(a.lat || a.latitude || 0);
+  const lon1 = Number(a.lng || a.longitude || 0);
+  const lat2 = Number(b.lat || b.latitude || 0);
+  const lon2 = Number(b.lng || b.longitude || 0);
   const R = 6371;
-  const dLat = toRad(b.lat - a.lat);
-  const dLng = toRad(b.lng - a.lng);
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lon2 - lon1);
   const s =
     Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(s));
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return Number((2 * R * Math.asin(Math.sqrt(s))).toFixed(3));
 }
 
 export function nearestWell(lat, lng) {
@@ -137,20 +602,9 @@ export function nearestWell(lat, lng) {
 }
 
 export function searchWells(q) {
-  const s = q.trim().toLowerCase();
+  const s = (q || "").trim().toLowerCase();
   if (!s) return [];
   return nearbyWells.filter((w) =>
-    [w.name, w.id, w.formation, w.status].join(" ").toLowerCase().includes(s)
+    [w.name, w.id, w.formation, w.status, w.field, w.wellType].join(" ").toLowerCase().includes(s)
   );
-}
-
-export function candidateRisk(c) {
-  const seed = c.id.charCodeAt(c.id.length - 1);
-  const stuck = 30 + ((seed * 7) % 55);
-  const loss = 25 + ((seed * 5) % 50);
-  const kick = 20 + ((seed * 3) % 40);
-  const overall = stuck > 55 ? "high" : stuck > 40 ? "medium" : "low";
-  const color =
-    overall === "high" ? "#ef4444" : overall === "medium" ? "#f59e0b" : "#22c55e";
-  return { stuck, loss, kick, overall, color };
 }

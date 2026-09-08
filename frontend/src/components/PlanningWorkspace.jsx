@@ -12,6 +12,7 @@ import {
   RefreshCw 
 } from 'lucide-react';
 import { fetchPlanningCandidates, tryBackend } from '../data/apiClient';
+import { useProject } from '../context/ProjectContext';
 
 // Reference point inside the Volve cluster used for the demo prospects.
 const DEFAULT_REFERENCE = { lat: 58.437, lng: 1.873, name: 'Proposed Well (15/9 block)' };
@@ -20,18 +21,18 @@ const DEFAULT_DEPTH = 3200;
 const MOCK_CANDIDATES = [
   {
     id: 'B', rank: '#1', code: 'LOC-B', name: 'Candidate Location B', isRecommended: true,
-    score: 82, formation: 'Strong (Fatehgarh / Forties Sandstone)',
+    score: 82, formation: 'Strong (Forties Sandstone)',
     offsetCoverage: 'High (5 offset wells correlated)', historicalRisk: 'Low (0 major fault intersections)',
     targetDepth: '3,200 m', inclination: 'Max 24° deviation build',
     surfaceAccess: 'Direct access via primary rig road corridor (1.2 km)', x: 210, y: 110,
-    pros: ['Optimal offset well density within 2 km radius', 'Seismic reflector indicates uniform structural thickness', 'Clearance exceeds 400m from historical blowout zone']
+    pros: ['Optimal offset well density within 2 km radius', 'Reflector indicates uniform structural thickness', 'Clearance exceeds 400m from historical blowout zone']
   },
   {
     id: 'A', rank: '#2', code: 'LOC-A', name: 'Candidate Location A', isRecommended: false,
     score: 74, formation: 'Moderate (Interbedded Shale / Sand)',
     offsetCoverage: 'Medium (3 offset wells)', historicalRisk: 'Medium (Minor fault proximity)',
     targetDepth: '3,150 m', inclination: 'Max 28° deviation build',
-    surfaceAccess: 'Requires 3.4 km secondary rig pad extension', x: 110, y: 70,
+    surfaceAccess: 'Requires secondary rig pad extension', x: 110, y: 70,
     pros: ['Proximity to existing gathering facility', 'Proven seal integrity across overlying caprock']
   },
   {
@@ -39,7 +40,7 @@ const MOCK_CANDIDATES = [
     score: 61, formation: 'Uncertain (Marginal sand facies)',
     offsetCoverage: 'Low (Sparse historical control)', historicalRisk: 'Elevated (Pore pressure transition zone)',
     targetDepth: '3,400 m', inclination: 'Max 34° high-dogleg profile',
-    surfaceAccess: 'Steep terrain slope requiring pad grading', x: 120, y: 165,
+    surfaceAccess: 'Pad grading required for rig layout', x: 120, y: 165,
     pros: ['Explores potential high-upside reservoir compartment']
   }
 ];
@@ -94,8 +95,9 @@ function toDisplayCandidate(cand, idx) {
   };
 }
 
-export default function PlanningWorkspace({ project, onOpenModal }) {
-  const [selectedCandidate, setSelectedCandidate] = useState('B');
+export default function PlanningWorkspace({ project, onOpenModal, onNavigateToOffsets, onNavigateToMap }) {
+  const { selectCandidate, selectedCandidate: savedCand } = useProject();
+  const [selectedCandidate, setSelectedCandidate] = useState(savedCand?.id || 'B');
   const [candidates, setCandidates] = useState(MOCK_CANDIDATES);
   const [apiStatus, setApiStatus] = useState('checking'); // 'live' | 'mock' | 'checking'
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -124,14 +126,16 @@ export default function PlanningWorkspace({ project, onOpenModal }) {
       const mapped = res.data.candidates.map(toDisplayCandidate);
       setCandidates(mapped);
       setSelectedCandidate(mapped[0]?.id || 'C1');
+      selectCandidate(mapped[0]);
       setApiStatus('live');
     } else {
       setCandidates(MOCK_CANDIDATES);
       setSelectedCandidate('B');
+      selectCandidate(MOCK_CANDIDATES[0]);
       setApiStatus('mock');
     }
     setIsRefreshing(false);
-  }, [constraints.wellSpacing, project?.formation]);
+  }, [constraints.wellSpacing, project?.formation, selectCandidate]);
 
   useEffect(() => {
     loadCandidates();
@@ -162,7 +166,7 @@ export default function PlanningWorkspace({ project, onOpenModal }) {
         <div className="phb-right">
           <div className="active-prospect-badge">
             <Compass size={15} color="#8F7C3A" />
-            <span>Target Prospect: {project?.name || "Rajasthan Block A"}</span>
+            <span>Target Prospect: {project?.name || "Offshore Field 7 — Volve 15/9"}</span>
           </div>
           <button
             className={`api-status-button status-${apiStatus}`}
@@ -189,7 +193,30 @@ export default function PlanningWorkspace({ project, onOpenModal }) {
                 <MapPin size={16} color="#8F7C3A" />
                 <span>CANDIDATE GEOSPATIAL MAP</span>
               </div>
-              <span className="map-zoom-badge">Grid: 1:25,000</span>
+              {onNavigateToMap && (
+                <button
+                  onClick={() => {
+                    selectCandidate(current);
+                    onNavigateToMap();
+                  }}
+                  style={{
+                    background: 'rgba(143,124,58,0.15)',
+                    border: '1px solid rgba(143,124,58,0.3)',
+                    color: '#C0AA8A',
+                    borderRadius: '6px',
+                    padding: '3px 8px',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  <span>Open Full Map Explorer</span>
+                  <ArrowRight size={12} />
+                </button>
+              )}
             </div>
 
             <div className="interactive-plan-map">
@@ -209,20 +236,20 @@ export default function PlanningWorkspace({ project, onOpenModal }) {
                       stroke="rgba(239,68,68,0.4)" 
                       strokeDasharray="4 3" 
                     />
-                    <text x="260" y="70" fill="rgba(239,68,68,0.7)" fontSize="9" fontWeight="bold">PROTECTED WATERWAY</text>
+                    <text x="248" y="70" fill="rgba(239,68,68,0.7)" fontSize="8.5" fontWeight="bold">PLATFORM COLLISION BUFFER</text>
                   </g>
                 )}
 
                 {constraints.existingWells && (
                   <g className="offset-wells-layer">
                     <circle cx="70" cy="110" r="5" fill="#3B82F6" stroke="#FFF" strokeWidth="1.5" />
-                    <text x="80" y="114" fill="#9CA3AF" fontSize="9" fontFamily="monospace">WELL-01</text>
+                    <text x="80" y="114" fill="#9CA3AF" fontSize="9" fontFamily="monospace">15/9-19 A</text>
 
                     <circle cx="160" cy="40" r="5" fill="#3B82F6" stroke="#FFF" strokeWidth="1.5" />
-                    <text x="170" y="44" fill="#9CA3AF" fontSize="9" fontFamily="monospace">WELL-04</text>
+                    <text x="170" y="44" fill="#9CA3AF" fontSize="9" fontFamily="monospace">15/9-F-14</text>
 
                     <circle cx="300" cy="180" r="5" fill="#10B981" stroke="#FFF" strokeWidth="1.5" />
-                    <text x="310" y="184" fill="#9CA3AF" fontSize="9" fontFamily="monospace">WELL-19</text>
+                    <text x="310" y="184" fill="#9CA3AF" fontSize="9" fontFamily="monospace">15/9-F-12</text>
                   </g>
                 )}
 
@@ -342,7 +369,10 @@ export default function PlanningWorkspace({ project, onOpenModal }) {
                   <div
                     key={c.id}
                     className={`candidate-rank-item ${isSelected ? 'is-selected' : ''}`}
-                    onClick={() => setSelectedCandidate(c.id)}
+                    onClick={() => {
+                      setSelectedCandidate(c.id);
+                      selectCandidate(c);
+                    }}
                   >
                     <div className="rank-left">
                       <span className="rank-badge">{c.rank}</span>
@@ -377,7 +407,7 @@ export default function PlanningWorkspace({ project, onOpenModal }) {
                 <span>SELECTED CANDIDATE: {current.name}</span>
               </div>
               <span className="candidate-suitability-pill">
-                Suitability: <strong>{current.score}/100</strong>
+                Planning Suitability: <strong>{current.score}/100</strong>
               </span>
             </div>
 
@@ -415,18 +445,49 @@ export default function PlanningWorkspace({ project, onOpenModal }) {
               </ul>
             </div>
 
-            <button 
-              className="btn btn-primary btn-generate-trajectory"
-              onClick={() => onOpenModal({
-                title: `Trajectory Specification: ${current.name}`,
-                subtitle: `Target: ${current.targetDepth} &bull; Score: ${current.score}/100`,
-                content: `Generating directional survey and casing program for ${current.name}.\n\n${current.inclination}\n• Anti-collision check: proximity to ${current.offsetCoverage}\n• Historical risk corridor: ${current.historicalRisk}\n• ${apiStatus === 'live' ? 'Results computed live by the NWIS Planning Engine.' : 'Demo data: results cached for offline review.'}`
-              })}
-            >
-              <Compass size={16} />
-              <span>Generate Trajectory &amp; Anti-Collision Plan</span>
-              <ArrowRight size={15} />
-            </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {onNavigateToMap && (
+                <button 
+                  className="btn btn-primary btn-generate-trajectory"
+                  style={{ background: '#F59E0B', color: '#000000', fontWeight: 700 }}
+                  onClick={() => {
+                    selectCandidate(current);
+                    onNavigateToMap();
+                  }}
+                >
+                  <MapPin size={16} />
+                  <span>Accept Location &amp; View on Map &rarr;</span>
+                  <ArrowRight size={15} />
+                </button>
+              )}
+
+              {onNavigateToOffsets && (
+                <button 
+                  className="btn btn-primary btn-generate-trajectory"
+                  style={{ background: '#8F7C3A', color: '#FFFFFF' }}
+                  onClick={() => {
+                    selectCandidate(current);
+                    onNavigateToOffsets();
+                  }}
+                >
+                  <Layers size={16} />
+                  <span>Accept Location &amp; Inspect Offset Analogues &rarr;</span>
+                  <ArrowRight size={15} />
+                </button>
+              )}
+
+              <button 
+                className="btn btn-secondary btn-generate-trajectory"
+                onClick={() => onOpenModal({
+                  title: `Trajectory Specification: ${current.name}`,
+                  subtitle: `Target: ${current.targetDepth} &bull; Score: ${current.score}/100`,
+                  content: `Generating directional survey and casing program for ${current.name}.\n\n${current.inclination}\n• Anti-collision check: proximity to ${current.offsetCoverage}\n• Historical risk corridor: ${current.historicalRisk}\n• ${apiStatus === 'live' ? 'Results computed live by the NWIS Planning Engine.' : 'Demo data: results cached for offline review.'}`
+                })}
+              >
+                <Compass size={16} />
+                <span>View Anti-Collision Specification</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>

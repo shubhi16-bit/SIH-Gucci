@@ -60,6 +60,14 @@ export async function fetchWellDetail(well) {
   return _get(`/wells/${encodeURIComponent(well)}`);
 }
 
+export async function askChatbot(payload) {
+  return _post('/chat', payload);
+}
+
+export async function fetchHealth() {
+  return _get('/health');
+}
+
 export function tryBackend(fn) {
   return fn().then(
     (data) => ({ ok: true, data }),

@@ -1,29 +1,178 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
+import { MapPin, Compass, Database, FileText, ArrowRight, Layers, Activity } from 'lucide-react';
 import WellMap from './WellMap';
-import ProjectCreatedView from './ProjectCreated';
-import {
-  candidateLocations,
-  candidateRisk,
-  haversineKm,
-  nearbyWells,
-  riskColors,
-} from '../data/wellData';
+import { nearbyWells } from '../data/wellData';
+import { useProject } from '../context/ProjectContext';
 
-const STEPS = [
-  'Search Area',
-  'View Nearby Wells',
-  'Inspect Well Details',
-  'Shortlist Candidates',
-  'Create Project',
-];
+export default function WellMapExplorer({ project, onNavigateToOffsets, onNavigateToHistory, onNavigateToPlanning, onOpenModal }) {
+  const { selectedCandidate } = useProject();
+  const [selectedWellId, setSelectedWellId] = useState('15/9-19 A');
+  const [selectedCandidateIds, setSelectedCandidateIds] = useState(selectedCandidate ? [selectedCandidate.id] : ['CAND-1']);
+  const [filterType, setFilterType] = useState('ALL');
 
-const STEP_HINTS = {
-  1: 'Search an area to drill to establish your target region.',
-  2: 'Review all the nearby dug up wells surrounding your target area.',
-  3: 'View the description and risk profile of those dug up wells.',
-  4: 'Compare risks and choose from your shortlisted candidate locations.',
-  5: 'Finalize your selection and create the project permanently.',
-};
+  const selectedWell = nearbyWells.find(w => w.id === selectedWellId) || nearbyWells[0];
+
+  const filteredWells = nearbyWells.filter(w => {
+    if (filterType === 'EXPLORATION') return w.wellType === 'EXPLORATION';
+    if (filterType === 'DEVELOPMENT') return w.wellType === 'DEVELOPMENT';
+    if (filterType === 'PROBLEM') return w.risk === 'high';
+    return true;
+  });
+
+  return (
+    <div className="map-explorer-layout" style={{ display: 'flex', height: 'calc(100vh - 120px)', minHeight: '650px', gap: '16px', position: 'relative' }}>
+      {/* 1. Left Map Panel */}
+      <div style={{ flex: 1, position: 'relative', borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
+        <WellMap
+          selectedWellId={selectedWellId}
+          onWellSelect={(id) => setSelectedWellId(id)}
+          selectedCandidateIds={selectedCandidateIds}
+          onCandidateToggle={(id) => setSelectedCandidateIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])}
+          referencePoint={selectedCandidate ? { lat: selectedCandidate.lat || 58.4416, lng: selectedCandidate.lon || 1.8875, name: selectedCandidate.name } : { lat: 58.4416, lng: 1.8876, name: 'Volve Field Center' }}
+          onReferenceChange={() => {}}
+          isDark={true}
+        />
+      </div>
+
+      {/* 2. Right Detail & Filter Sidebar */}
+      <div style={{ width: '380px', display: 'flex', flexDirection: 'column', gap: '14px', flexShrink: 0 }}>
+        {/* Header card */}
+        <div style={{ background: '#0B0B0E', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#8F7C3A', letterSpacing: '0.1em' }}>VOLVE 15/9 GEOSPATIAL MAP</span>
+            <span style={{ fontSize: '0.75rem', background: 'rgba(143,124,58,0.15)', color: '#C0AA8A', padding: '3px 8px', borderRadius: '6px', fontWeight: 700 }}>28 Volve Wells</span>
+          </div>
+          <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#FFFFFF', fontWeight: 800 }}>Wellbore &amp; Offset Explorer</h3>
+          <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: '#A1A1AA' }}>
+            Interactive OpenStreetMap view of real Volve exploration and development wellbores.
+          </p>
+
+          {/* Quick Filters */}
+          <div style={{ display: 'flex', gap: '6px', marginTop: '12px' }}>
+            {['ALL', 'EXPLORATION', 'DEVELOPMENT', 'PROBLEM'].map(f => (
+              <button
+                key={f}
+                onClick={() => setFilterType(f)}
+                style={{
+                  padding: '4px 8px',
+                  borderRadius: '6px',
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  border: '1px solid',
+                  cursor: 'pointer',
+                  background: filterType === f ? '#8F7C3A' : 'transparent',
+                  color: filterType === f ? '#FFFFFF' : '#A1A1AA',
+                  borderColor: filterType === f ? '#8F7C3A' : 'rgba(255,255,255,0.12)'
+                }}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Selected Well Dossier Card */}
+        <div style={{ background: '#0B0B0E', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px', flex: 1, overflowY: 'auto' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div>
+              <span style={{ fontSize: '0.68rem', color: '#71717A', fontWeight: 700, letterSpacing: '0.08em' }}>INSPECTED WELLBORE</span>
+              <h4 style={{ margin: '2px 0 0', fontSize: '1.2rem', color: '#FFFFFF', fontWeight: 800, fontFamily: 'monospace' }}>{selectedWell.id}</h4>
+              <span style={{ fontSize: '0.76rem', color: '#A1A1AA' }}>{selectedWell.field} &bull; {selectedWell.wellType}</span>
+            </div>
+            <span style={{
+              padding: '3px 8px',
+              borderRadius: '6px',
+              fontSize: '0.72rem',
+              fontWeight: 800,
+              background: selectedWell.risk === 'high' ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.15)',
+              color: selectedWell.risk === 'high' ? '#EF4444' : '#10B981',
+              border: `1px solid ${selectedWell.risk === 'high' ? 'rgba(239,68,68,0.3)' : 'rgba(16,185,129,0.3)'}`
+            }}>
+              {selectedWell.risk === 'high' ? 'HAZARD OFFSET' : 'NORMAL OFFSET'}
+            </span>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', background: 'rgba(0,0,0,0.35)', padding: '10px', borderRadius: '8px' }}>
+            <div>
+              <div style={{ fontSize: '0.68rem', color: '#71717A', fontWeight: 700 }}>TOTAL DEPTH</div>
+              <div style={{ fontSize: '0.86rem', color: '#FFFFFF', fontWeight: 700 }}>{selectedWell.depth.toLocaleString()} m</div>
+            </div>
+            <div>
+              <div style={{ fontSize: '0.68rem', color: '#71717A', fontWeight: 700 }}>FINAL TVD</div>
+              <div style={{ fontSize: '0.86rem', color: '#FFFFFF', fontWeight: 700 }}>{selectedWell.tvd.toLocaleString()} m</div>
+            </div>
+            <div>
+              <div style={{ fontSize: '0.68rem', color: '#71717A', fontWeight: 700 }}>FORMATION AT TD</div>
+              <div style={{ fontSize: '0.8rem', color: '#C0AA8A', fontWeight: 700 }}>{selectedWell.formation}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: '0.68rem', color: '#71717A', fontWeight: 700 }}>MAX INCLINATION</div>
+              <div style={{ fontSize: '0.86rem', color: '#FFFFFF', fontWeight: 700 }}>{selectedWell.maxInclination}°</div>
+            </div>
+          </div>
+
+          <div style={{ background: 'rgba(143,124,58,0.08)', border: '1px solid rgba(143,124,58,0.25)', borderRadius: '8px', padding: '10px' }}>
+            <div style={{ fontSize: '0.7rem', color: '#C0AA8A', fontWeight: 800, marginBottom: '2px' }}>HISTORICAL INCIDENT RECORD</div>
+            <div style={{ fontSize: '0.8rem', color: '#E4E4E7' }}>{selectedWell.topEvent}</div>
+            <div style={{ fontSize: '0.72rem', color: '#71717A', marginTop: '2px' }}>{selectedWell.eventsCount} operational incidents indexed in Volve DDR archive</div>
+          </div>
+
+          {/* Action CTAs */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: 'auto' }}>
+            {onNavigateToOffsets && (
+              <button
+                onClick={() => onNavigateToOffsets(selectedWell.id)}
+                style={{
+                  background: '#3B82F6',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '10px',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+              >
+                <Database size={15} />
+                <span>Run Offset Intelligence for {selectedWell.id}</span>
+                <ArrowRight size={14} />
+              </button>
+            )}
+
+            {onNavigateToHistory && (
+              <button
+                onClick={() => onNavigateToHistory(selectedWell.id)}
+                style={{
+                  background: '#10B981',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '10px',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+              >
+                <FileText size={15} />
+                <span>View Historical DDR Events</span>
+                <ArrowRight size={14} />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 export default function WellOffsetWizard({ theme = 'dark', onGoDashboard }) {
   const isDark = theme === 'dark';

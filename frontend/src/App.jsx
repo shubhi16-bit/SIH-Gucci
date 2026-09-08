@@ -1,167 +1,78 @@
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import StreamlinedFeatures from './components/StreamlinedFeatures';
 import LoginModal from './components/LoginModal';
 import ProjectHub from './components/ProjectHub';
 import EngineeringConsole from './components/EngineeringConsole';
-import WellOffsetWizard from './components/WellOffsetWizard';
 import ActionModal from './components/ActionModal';
 import Footer from './components/Footer';
+import { ProjectProvider, useProject } from './context/ProjectContext';
 
-export default function App() {
-  // Navigation View: 'landing' | 'project_hub' | 'offset' | 'console'
-  const [view, setView] = useState('landing');
-  
-  // Authentication State
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState(null);
+function AppContent() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const {
+    currentProject,
+    selectProject,
+    createProject,
+    user,
+    isLoggedIn,
+    loginUser,
+    logoutUser,
+    theme,
+    toggleTheme,
+  } = useProject();
+
   const [showLoginModal, setShowLoginModal] = useState(false);
-
-  // Current active project
-  const [currentProject, setCurrentProject] = useState({
-    id: 'kg-basin',
-    name: 'KG Basin D6',
-    field: 'Krishna-Godavari',
-    formation: 'Ravva Sandstone',
-    status: 'DRILLING',
-    statusType: 'active',
-    workflowType: 'Active Well Monitoring',
-    depthDisplay: 'Current: 2,184 m',
-    depth: '2,184 m',
-    targetDepth: '3,450 m',
-    risk: 'HIGH',
-    riskLevel: 'high',
-    offsetWells: '8 Offset Wells',
-    defaultScreen: 'active_well'
-  });
-
-  // Active module tab in console ('active_well' | 'planning' | 'offsets' | 'historical')
-  const [activeConsoleTab, setActiveConsoleTab] = useState('active_well');
-
-  // Modal state for interactive details
   const [modalData, setModalData] = useState(null);
 
-  // Theme state for post-landing workspace: 'dark' | 'light'
-  const [theme, setTheme] = useState(() => localStorage.getItem('nwis-theme') || 'dark');
-
-  const handleToggleTheme = () => {
-    setTheme(prev => {
-      const next = prev === 'dark' ? 'light' : 'dark';
-      localStorage.setItem('nwis-theme', next);
-      return next;
-    });
-  };
+  const isLanding = location.pathname === '/';
 
   useEffect(() => {
-    // Landing page (where the video hero is) strictly stays in dark mode
-    if (view === 'landing') {
+    // Landing page stays strictly in dark mode; post-landing follows user theme
+    if (isLanding) {
       document.documentElement.setAttribute('data-theme', 'dark');
     } else {
       document.documentElement.setAttribute('data-theme', theme);
     }
-  }, [view, theme]);
+  }, [isLanding, theme]);
 
   const handleOpenLogin = () => {
     if (isLoggedIn) {
-      setView('project_hub');
+      navigate('/projects');
     } else {
       setShowLoginModal(true);
     }
   };
 
   const handleLoginSuccess = (userData) => {
-    setIsLoggedIn(true);
-    setUser(userData);
+    loginUser(userData);
     setShowLoginModal(false);
-    setView('project_hub');
+    navigate('/projects');
   };
 
   const handleLogout = () => {
-    setIsLoggedIn(false);
-    setUser(null);
-    setView('landing');
-  };
-
-  const handleOpenProjects = () => {
-    setView('project_hub');
-  };
-
-  const handleOpenDemo = () => {
-    // Directly launch into the active drilling well command center for reviewers
-    setCurrentProject({
-      id: 'kg-basin',
-      name: 'KG Basin D6',
-      field: 'Krishna-Godavari',
-      formation: 'Ravva Sandstone',
-      status: 'DRILLING',
-      statusType: 'active',
-      workflowType: 'Active Well Monitoring',
-      depthDisplay: 'Current: 2,184 m',
-      depth: '2,184 m',
-      targetDepth: '3,450 m',
-      risk: 'HIGH',
-      riskLevel: 'high',
-      offsetWells: '8 Offset Wells',
-      defaultScreen: 'active_well'
-    });
-    setActiveConsoleTab('active_well');
-    setView('console');
+    logoutUser();
+    navigate('/');
   };
 
   const handleSelectProject = (project, targetScreen = 'active_well') => {
-    setCurrentProject(project);
-    setActiveConsoleTab(targetScreen || 'active_well');
-    setView('console');
+    selectProject(project);
+    const routeMap = {
+      active_well: '/active',
+      planning: '/planning',
+      map: '/map',
+      offsets: '/offsets',
+      historical: '/history'
+    };
+    navigate(routeMap[targetScreen] || '/active');
   };
 
   const handleCreateProject = (newProject) => {
-    setCurrentProject(newProject);
-    setActiveConsoleTab('offsets');
-    setView('console');
-  };
-
-  const handleOpenWellOffset = () => {
-    setCurrentProject({
-      id: 'new-offset',
-      name: 'New Prospect',
-      field: 'Upper Assam Basin',
-      formation: 'Tipam Sandstone',
-      status: 'PLANNING',
-      statusType: 'planning',
-      workflowType: 'New Exploration Area',
-      depthDisplay: 'Target: TBD',
-      depth: '',
-      targetDepth: '',
-      risk: 'LOW',
-      riskLevel: 'low',
-      offsetWells: 'Search for nearby wells',
-      defaultScreen: 'active_well',
-    });
-    setView('offset');
-  };
-
-  const handleOffsetToDashboard = (createdProject) => {
-    setCurrentProject({
-      id: createdProject?.id || 'wis-project',
-      name: createdProject?.reference?.name?.split(',')[0] || 'New Prospect',
-      field: 'Upper Assam Basin',
-      formation: createdProject?.inspectedWell?.formation || 'Tipam Sandstone',
-      status: 'PLANNING',
-      statusType: 'planning',
-      workflowType: 'New Exploration Area',
-      depthDisplay: createdProject?.inspectedWell
-        ? `Surveyed: ${createdProject.inspectedWell.depth.toLocaleString()} m`
-        : 'Target: TBD',
-      depth: '',
-      targetDepth: '',
-      risk: createdProject?.inspectedWell?.risk?.toUpperCase() || 'LOW',
-      riskLevel: createdProject?.inspectedWell?.risk || 'low',
-      offsetWells: `${createdProject?.candidates?.length ?? 0} Candidate(s)`,
-      defaultScreen: 'active_well',
-    });
-    setActiveConsoleTab('active_well');
-    setView('console');
+    createProject(newProject);
+    navigate('/planning');
   };
 
   const handleOpenModal = (data) => {
@@ -174,48 +85,177 @@ export default function App() {
 
   return (
     <div className="app-wrapper">
-      {view === 'console' ? (
-        /* Full Authenticated Engineering Console */
-        <EngineeringConsole
-          project={currentProject}
-          activeTab={activeConsoleTab}
-          onTabChange={setActiveConsoleTab}
-          onSwitchProject={() => setView('project_hub')}
-          onExit={() => setView('landing')}
-          onOpenModal={handleOpenModal}
-          user={user}
-          theme={theme}
-          onToggleTheme={handleToggleTheme}
+      <Routes>
+        {/* Route 1: Landing Page */}
+        <Route
+          path="/"
+          element={
+            <>
+              <Navbar 
+                isLoggedIn={isLoggedIn}
+                user={user}
+                onOpenLogin={handleOpenLogin}
+                onOpenProjects={() => navigate('/projects')}
+                onOpenDemo={() => navigate('/active')}
+                onLogout={handleLogout}
+              />
+              <Hero 
+                isLoggedIn={isLoggedIn}
+                onOpenLogin={handleOpenLogin}
+                onOpenProjects={() => navigate('/projects')}
+                onOpenDemo={() => navigate('/active')}
+                onOpenModal={handleOpenModal} 
+              />
+              <div className="hero-scroll-fade-transition" />
+              <StreamlinedFeatures onOpenModal={handleOpenModal} />
+              <Footer />
+            </>
+          }
         />
-      ) : view === 'offset' ? (
-        /* Well Offset / map-based project explorer */
-        <WellOffsetWizard
-          theme={theme}
-          onGoDashboard={handleOffsetToDashboard}
+
+        {/* Route 2: Project Hub */}
+        <Route
+          path="/projects"
+          element={
+            <ProjectHub
+              user={user}
+              onSelectProject={handleSelectProject}
+              onCreateProject={handleCreateProject}
+              onClose={() => navigate(-1 || '/')}
+              onLogout={handleLogout}
+              theme={theme}
+              onToggleTheme={toggleTheme}
+            />
+          }
         />
-      ) : (
-        /* Minimal Landing Page */
-        <>
-          <Navbar 
-            isLoggedIn={isLoggedIn}
-            user={user}
-            onOpenLogin={handleOpenLogin}
-            onOpenProjects={handleOpenProjects}
-            onOpenDemo={handleOpenDemo}
-            onLogout={handleLogout}
-          />
-          <Hero 
-            isLoggedIn={isLoggedIn}
-            onOpenLogin={handleOpenLogin}
-            onOpenProjects={handleOpenProjects}
-            onOpenDemo={handleOpenDemo}
-            onOpenModal={handleOpenModal} 
-          />
-          <div className="hero-scroll-fade-transition" />
-          <StreamlinedFeatures onOpenModal={handleOpenModal} />
-          <Footer />
-        </>
-      )}
+
+        {/* Route 3: Console Tabs with Deep Link Routes */}
+        <Route
+          path="/active"
+          element={
+            <EngineeringConsole
+              project={currentProject}
+              activeTab="active_well"
+              onTabChange={(tab) => {
+                const map = { active_well: '/active', planning: '/planning', map: '/map', offsets: '/offsets', historical: '/history' };
+                navigate(map[tab] || '/active');
+              }}
+              onSwitchProject={() => navigate('/projects')}
+              onExit={() => navigate('/')}
+              onOpenModal={handleOpenModal}
+              user={user}
+              theme={theme}
+              onToggleTheme={toggleTheme}
+            />
+          }
+        />
+
+        <Route
+          path="/active/:well"
+          element={
+            <EngineeringConsole
+              project={currentProject}
+              activeTab="active_well"
+              onTabChange={(tab) => {
+                const map = { active_well: '/active', planning: '/planning', map: '/map', offsets: '/offsets', historical: '/history' };
+                navigate(map[tab] || '/active');
+              }}
+              onSwitchProject={() => navigate('/projects')}
+              onExit={() => navigate('/')}
+              onOpenModal={handleOpenModal}
+              user={user}
+              theme={theme}
+              onToggleTheme={toggleTheme}
+            />
+          }
+        />
+
+        <Route
+          path="/planning"
+          element={
+            <EngineeringConsole
+              project={currentProject}
+              activeTab="planning"
+              onTabChange={(tab) => {
+                const map = { active_well: '/active', planning: '/planning', map: '/map', offsets: '/offsets', historical: '/history' };
+                navigate(map[tab] || '/planning');
+              }}
+              onSwitchProject={() => navigate('/projects')}
+              onExit={() => navigate('/')}
+              onOpenModal={handleOpenModal}
+              user={user}
+              theme={theme}
+              onToggleTheme={toggleTheme}
+            />
+          }
+        />
+
+        <Route
+          path="/map"
+          element={
+            <EngineeringConsole
+              project={currentProject}
+              activeTab="map"
+              onTabChange={(tab) => {
+                const map = { active_well: '/active', planning: '/planning', map: '/map', offsets: '/offsets', historical: '/history' };
+                navigate(map[tab] || '/map');
+              }}
+              onSwitchProject={() => navigate('/projects')}
+              onExit={() => navigate('/')}
+              onOpenModal={handleOpenModal}
+              user={user}
+              theme={theme}
+              onToggleTheme={toggleTheme}
+            />
+          }
+        />
+
+        <Route
+          path="/offsets"
+          element={
+            <EngineeringConsole
+              project={currentProject}
+              activeTab="offsets"
+              onTabChange={(tab) => {
+                const map = { active_well: '/active', planning: '/planning', map: '/map', offsets: '/offsets', historical: '/history' };
+                navigate(map[tab] || '/offsets');
+              }}
+              onSwitchProject={() => navigate('/projects')}
+              onExit={() => navigate('/')}
+              onOpenModal={handleOpenModal}
+              user={user}
+              theme={theme}
+              onToggleTheme={toggleTheme}
+            />
+          }
+        />
+
+        <Route
+          path="/history"
+          element={
+            <EngineeringConsole
+              project={currentProject}
+              activeTab="historical"
+              onTabChange={(tab) => {
+                const map = { active_well: '/active', planning: '/planning', map: '/map', offsets: '/offsets', historical: '/history' };
+                navigate(map[tab] || '/history');
+              }}
+              onSwitchProject={() => navigate('/projects')}
+              onExit={() => navigate('/')}
+              onOpenModal={handleOpenModal}
+              user={user}
+              theme={theme}
+              onToggleTheme={toggleTheme}
+            />
+          }
+        />
+
+        {/* Console root redirect */}
+        <Route path="/console" element={<Navigate to="/active" replace />} />
+
+        {/* Catch-all fallback */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
 
       {/* Engineer Login Modal */}
       {showLoginModal && (
@@ -225,25 +265,21 @@ export default function App() {
         />
       )}
 
-      {/* eRTMAC-NWIS Workspace & Project Hub */}
-      {view === 'project_hub' && (
-        <ProjectHub
-          user={user}
-          onSelectProject={handleSelectProject}
-          onCreateProject={handleCreateProject}
-          onOpenWellOffset={handleOpenWellOffset}
-          onClose={() => setView('landing')}
-          onLogout={handleLogout}
-          theme={theme}
-          onToggleTheme={handleToggleTheme}
-        />
-      )}
-
       {/* Detail Action Modal */}
       <ActionModal 
         data={modalData} 
         onClose={handleCloseModal} 
       />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <ProjectProvider>
+      <BrowserRouter>
+        <AppContent />
+      </BrowserRouter>
+    </ProjectProvider>
   );
 }

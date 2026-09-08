@@ -1,11 +1,15 @@
+/**
+ * [LEGACY / UNUSED WORKFLOW COMPONENT]
+ * Retained for code reference only; disconnected from active routes.
+ */
 import React from 'react';
 import { nearbyWells } from '../data/wellData';
 
 const LIFECYCLE = [
   { label: 'Explore', what: 'Location scouting, nearby wells & candidate selection', state: 'done' },
   { label: 'Plan', what: 'Trajectory design, offsets, cost & timeline estimates', state: 'next' },
-  { label: 'Predict', what: 'Risk forecasts from the similar-well engine', state: 'todo' },
-  { label: 'Drill', what: 'Real-time telemetry monitoring & field alerts', state: 'todo' },
+  { label: 'Predict', what: 'Historical hazard correlation from the similarity engine', state: 'todo' },
+  { label: 'Drill', what: 'Replayed drilling telemetry & field alerts', state: 'todo' },
   { label: 'Learn', what: 'Post-well review feeds the institutional knowledge base', state: 'todo' },
 ];
 

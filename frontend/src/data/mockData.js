@@ -27,10 +27,10 @@ export const LIFECYCLE_STAGES = [
   },
   {
     step: "03",
-    phase: "Predict",
-    title: "What risks lie ahead?",
+    phase: "Analyze",
+    title: "What historical risks lie ahead?",
     description: "Depth-correlated historical drilling problems: mud loss, stuck pipe, kicks, and pack-offs.",
-    badge: "Risk Forecast & Correlation",
+    badge: "Historical Hazard Correlation",
     color: "#A85530",
     points: [
       "Depth-correlated hazard mapping (±50m)",
@@ -42,11 +42,11 @@ export const LIFECYCLE_STAGES = [
     step: "04",
     phase: "Drill",
     title: "What is happening now?",
-    description: "Historical WITSML 1.4/2.0 telemetry playback with live parameter tracking & early anomaly warnings.",
+    description: "WITSML telemetry playback with drilling parameter monitoring & depth-aligned anomaly warnings.",
     badge: "WITSML Telemetry Replay",
     color: "#5E2A25",
     points: [
-      "Real-time ROP, WOB, RPM, Torque, SPP, Flow",
+      "Replayed ROP, WOB, RPM, Torque, SPP, Flow",
       "Synchronized time & depth playback controls",
       "Pre-incident alert threshold detection"
     ]
@@ -201,7 +201,7 @@ export const EVIDENCE_SAMPLE = {
   date: "2008-04-12",
   excerpt: "While drilling 12-1/4\" hole at 2,840m MD, sudden loss of returns observed (35 bbl/hr). Standpipe pressure dropped by 450 psi. Mixed and pumped 50 bbl high-viscosity LCM pill. Regained full returns after 2.5 hours.",
   provenance: "Directly Reported in Source DDR",
-  confidence: "98% Ground Truth"
+  evidenceQuality: "Verified Ground Truth"
 };
 
 export const ASSISTANT_SUGGESTIONS = [

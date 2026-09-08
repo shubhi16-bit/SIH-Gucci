@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Database, 
   GitCompare, 
@@ -11,45 +12,46 @@ import {
   RefreshCw 
 } from 'lucide-react';
 import { fetchSimilarWells, tryBackend } from '../data/apiClient';
+import { nearbyWells } from '../data/wellData';
 
 // Reference point inside the Volve cluster used for the demo prospect.
-const DEFAULT_REFERENCE = { lat: 58.437, lng: 1.873 };
+const DEFAULT_REFERENCE = { lat: 58.4416, lng: 1.8875 };
 
 const MOCK_SIMILAR_WELLS = [
   {
     id: "15/9-19 A",
     similarity: 89,
-    formation: "Forties Sandstone",
+    formation: "Formation information where available (Forties Sandstone)",
     depthOverlap: "91%",
     trajectory: "Similar (24° build section)",
     eventsCount: 3,
     topEvent: "Stuck Pipe — 2,162m",
     eventSeverity: "high",
-    factors: { formation: 95, depth: 88, trajectory: 82, location: 76, drillingProfile: 84 },
-    summary: "High Net-to-Gross Paleocene reservoir analogue with identical lithology contacts and mud weight pressure profile."
+    factors: { geographic: 76, depth: 88, formation: 95, trajectory: 82, context: 84 },
+    summary: "Paleocene reservoir analogue with correlated lithology contacts and mud weight pressure profile."
   },
   {
     id: "15/9-F-5",
     similarity: 82,
-    formation: "Forties Sandstone",
+    formation: "Formation information where available (Forties Sandstone)",
     depthOverlap: "85%",
     trajectory: "Parallel build-and-hold",
     eventsCount: 0,
     topEvent: "Clean drilling run to TD",
     eventSeverity: "safe",
-    factors: { formation: 92, depth: 84, trajectory: 80, location: 74, drillingProfile: 81 },
+    factors: { geographic: 74, depth: 84, formation: 92, trajectory: 80, context: 81 },
     summary: "Production well drilled with synthetic-based mud. Encountered zero differential sticking or lost circulation intervals."
   },
   {
     id: "15/9-F-7",
     similarity: 76,
-    formation: "Hugin / Forties",
+    formation: "Formation information where available (Hugin / Forties)",
     depthOverlap: "78%",
     trajectory: "High inclination (32°)",
     eventsCount: 1,
     topEvent: "Mud Loss — 1,900m",
     eventSeverity: "med",
-    factors: { formation: 78, depth: 75, trajectory: 73, location: 78, drillingProfile: 76 },
+    factors: { geographic: 78, depth: 75, formation: 78, trajectory: 73, context: 76 },
     summary: "Offset reservoir appraisal well. Experienced micro-fracture fluid losses in upper transition zone at 1,900m MD."
   }
 ];
@@ -76,29 +78,35 @@ function primaryEvent(eventSummary) {
 function toSimilarWell(row, idx) {
   const primary = primaryEvent(row.historical_events);
   const factors = {
-    formation: Math.round(row.formation_similarity || 0),
+    geographic: Math.round(row.geographic_similarity || 0),
     depth: Math.round(row.depth_similarity || 0),
+    formation: Math.round(row.formation_similarity || 0),
     trajectory: Math.round(row.trajectory_similarity || 0),
-    location: Math.round(row.geographic_similarity || 0),
-    drillingProfile: Math.round(row.context_similarity || 0),
+    context: Math.round(row.context_similarity || 0),
   };
 
   return {
     id: row.well,
     similarity: Math.round(row.similarity_score || 0),
-    formation: row.formation_td || row.formation_hc || 'Correlated interval',
+    formation: row.formation_td || row.formation_hc || 'Formation information where available',
     depthOverlap: `${Math.round(row.depth_similarity || 0)}%`,
     trajectory: row.well_type ? `Type: ${row.well_type.replace(/_/g, ' ')}` : (factors.trajectory > 60 ? 'Parallel profile' : 'Divergent profile'),
     eventsCount: row.total_historical_events || 0,
     topEvent: primary.label,
     eventSeverity: primary.severity,
     factors,
-    summary: `Similarity score ${Math.round(row.similarity_score || 0)}% computed across geography, depth, formation, trajectory and well context against the proposed prospect.`,
+    summary: `Weighted Similarity Index ${Math.round(row.similarity_score || 0)}/100 computed across Geographic Proximity, Depth, Formation, Trajectory, and Context against the proposed prospect.`,
     historical_events: row.historical_events || {},
   };
 }
 
-export default function OffsetIntelligence({ project, onOpenModal }) {
+export default function OffsetIntelligence({ project, onOpenModal, onNavigateToHistory }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const targetWellName = location?.state?.well || project?.name || '15/9-19 A';
+  const targetWellObj = nearbyWells.find(w => w.id === targetWellName || w.name.includes(targetWellName)) || nearbyWells[0];
+
   const [selectedWellId, setSelectedWellId] = useState("15/9-19 A");
   const [similarWells, setSimilarWells] = useState(MOCK_SIMILAR_WELLS);
   const [apiStatus, setApiStatus] = useState('checking');
@@ -107,12 +115,13 @@ export default function OffsetIntelligence({ project, onOpenModal }) {
   const loadSimilar = useCallback(async () => {
     setIsRefreshing(true);
     const payload = {
-      lat: DEFAULT_REFERENCE.lat,
-      lng: DEFAULT_REFERENCE.lng,
-      depth: 3200,
+      lat: targetWellObj?.lat || DEFAULT_REFERENCE.lat,
+      lng: targetWellObj?.lng || DEFAULT_REFERENCE.lng,
+      depth: targetWellObj?.depth || 3200,
       field: 'VOLVE',
-      formation: 'HUGIN FM',
+      formation: targetWellObj?.formation || 'HUGIN FM',
       top_k: 6,
+      target_well_name: targetWellObj?.id || '15/9-19 A',
     };
     const res = await tryBackend(() => fetchSimilarWells(payload));
     if (res.ok && res.data.comparable_wells && res.data.comparable_wells.length) {
@@ -126,13 +135,21 @@ export default function OffsetIntelligence({ project, onOpenModal }) {
       setApiStatus('mock');
     }
     setIsRefreshing(false);
-  }, []);
+  }, [targetWellObj]);
 
   useEffect(() => {
     loadSimilar();
   }, [loadSimilar]);
 
   const currentWell = similarWells.find(w => w.id === selectedWellId) || similarWells[0];
+
+  const handleGoToHistory = (wellId) => {
+    if (onNavigateToHistory) {
+      onNavigateToHistory(wellId);
+    } else {
+      navigate('/history', { state: { well: wellId } });
+    }
+  };
 
   return (
     <div className="offset-intel-layout">
@@ -142,18 +159,18 @@ export default function OffsetIntelligence({ project, onOpenModal }) {
           <span className="ohb-tag">ANALOGUE MATCHING ENGINE</span>
           <h2 className="ohb-title">Offset Intelligence &amp; Well Similarity</h2>
           <p className="ohb-sub">
-            Multi-dimensional feature scoring across lithology, pore pressure, trajectory curvature, and depth interval overlap.
+            Multi-dimensional feature scoring across geographic proximity, depth interval overlap, lithology, wellbore trajectory, and context.
           </p>
         </div>
 
         {/* Current Well Context Pill */}
         <div className="current-well-context-card">
-          <div className="cwc-label">CURRENT ACTIVE WELL</div>
-          <div className="cwc-id">{project?.name || '15/9-F-1'}</div>
+          <div className="cwc-label">TARGET PROSPECT / REFERENCE WELL</div>
+          <div className="cwc-id">{targetWellObj.id}</div>
           <div className="cwc-specs">
-            <span>Depth: <strong>2,150 m</strong></span>
+            <span>Depth: <strong>{targetWellObj.depth ? `${targetWellObj.depth.toLocaleString()} m MD` : '3,200 m'}</strong></span>
             <span>&bull;</span>
-            <span>Formation: <strong>Forties Sandstone</strong></span>
+            <span>Formation: <strong>Formation information where available ({targetWellObj.formation || 'HUGIN FM'})</strong></span>
           </div>
         </div>
       </div>
@@ -172,7 +189,6 @@ export default function OffsetIntelligence({ project, onOpenModal }) {
           <div className="similar-cards-stack">
             {similarWells.map((well) => {
               const isSelected = well.id === selectedWellId;
-              const isHighDanger = well.eventSeverity === 'high';
 
               return (
                 <div
@@ -218,53 +234,45 @@ export default function OffsetIntelligence({ project, onOpenModal }) {
           </div>
         </div>
 
-        {/* Right Column: "Why Similar?" Explainable Factor Model */}
+        {/* Right Column: Deep-Dive Similarity Breakdown for Selected Well */}
         <div className="offset-col-right">
-          <div className="col-section-header">
-            <span className="csh-title">WHY SIMILAR? EXPLAINABLE FACTORS</span>
-            <span className="csh-sub">Grounded In Multi-Parameter Correlation</span>
-            <button
-              className={`api-status-button status-${apiStatus}`}
-              onClick={() => loadSimilar()}
-              disabled={isRefreshing}
-              title={apiStatus === 'live' ? 'Connected to NWIS backend API' : 'Backend unreachable — showing demo data'}
-            >
-              {isRefreshing
-                ? <RefreshCw size={13} className="spin" />
-                : <span className="status-dot" />}
-              <span>{apiStatus === 'live' ? 'Live API' : apiStatus === 'mock' ? 'Demo data' : 'Connecting…'}</span>
-            </button>
-          </div>
-
-          <div className="explainable-model-card">
-            <div className="emc-header">
-              <div>
-                <h3 className="emc-well-title">{currentWell.id} Analogue Breakdown</h3>
-                <p className="emc-well-sub">{currentWell.summary}</p>
+          <div className="odp-card">
+            <div className="odp-head">
+              <div className="odp-title-group">
+                <span className="odp-tag">ANALOGUE DOSSIER</span>
+                <h3 className="odp-well-name">Offset Well {currentWell.id}</h3>
               </div>
-              <div className="emc-total-pill">
-                <span>Overall:</span>
-                <strong>{currentWell.similarity}%</strong>
+
+              <div className="odp-overall-match">
+                <span className="oom-label">Weighted Similarity Index (0–100)</span>
+                <div className="oom-number-wrap">
+                  <span className="oom-val">{currentWell.similarity}</span>
+                  <span className="oom-denom">/100</span>
+                </div>
               </div>
             </div>
 
-            {/* Factor Bars */}
-            <div className="factors-bars-stack">
-              {/* Formation */}
+            <p className="odp-summary-text">{currentWell.summary}</p>
+
+            {/* 5-Factor Similarity Breakdown using actual backend dimensions */}
+            <div className="factor-breakdown-section">
+              <h4 className="fbs-title">MULTI-FACTOR SIMILARITY BREAKDOWN</h4>
+
+              {/* 1. Geographic Proximity */}
               <div className="factor-bar-row">
                 <div className="fbr-info">
-                  <span className="fbr-label">Formation &amp; Lithology</span>
-                  <span className="fbr-val">{currentWell.factors.formation}%</span>
+                  <span className="fbr-label">Geographic Proximity</span>
+                  <span className="fbr-val">{currentWell.factors.geographic}%</span>
                 </div>
                 <div className="fbr-track">
-                  <div className="fbr-fill fill-gold" style={{ width: `${currentWell.factors.formation}%` }} />
+                  <div className="fbr-fill fill-gold" style={{ width: `${currentWell.factors.geographic}%` }} />
                 </div>
               </div>
 
-              {/* Depth */}
+              {/* 2. Depth */}
               <div className="factor-bar-row">
                 <div className="fbr-info">
-                  <span className="fbr-label">Depth Interval Overlap</span>
+                  <span className="fbr-label">Depth</span>
                   <span className="fbr-val">{currentWell.factors.depth}%</span>
                 </div>
                 <div className="fbr-track">
@@ -272,10 +280,21 @@ export default function OffsetIntelligence({ project, onOpenModal }) {
                 </div>
               </div>
 
-              {/* Trajectory */}
+              {/* 3. Formation */}
               <div className="factor-bar-row">
                 <div className="fbr-info">
-                  <span className="fbr-label">Trajectory &amp; Dogleg Profile</span>
+                  <span className="fbr-label">Formation</span>
+                  <span className="fbr-val">{currentWell.factors.formation}%</span>
+                </div>
+                <div className="fbr-track">
+                  <div className="fbr-fill fill-gold" style={{ width: `${currentWell.factors.formation}%` }} />
+                </div>
+              </div>
+
+              {/* 4. Trajectory */}
+              <div className="factor-bar-row">
+                <div className="fbr-info">
+                  <span className="fbr-label">Trajectory</span>
                   <span className="fbr-val">{currentWell.factors.trajectory}%</span>
                 </div>
                 <div className="fbr-track">
@@ -283,25 +302,14 @@ export default function OffsetIntelligence({ project, onOpenModal }) {
                 </div>
               </div>
 
-              {/* Location */}
+              {/* 5. Context */}
               <div className="factor-bar-row">
                 <div className="fbr-info">
-                  <span className="fbr-label">Geographic &amp; Structural Proximity</span>
-                  <span className="fbr-val">{currentWell.factors.location}%</span>
+                  <span className="fbr-label">Context</span>
+                  <span className="fbr-val">{currentWell.factors.context}%</span>
                 </div>
                 <div className="fbr-track">
-                  <div className="fbr-fill fill-gold" style={{ width: `${currentWell.factors.location}%` }} />
-                </div>
-              </div>
-
-              {/* Drilling Profile */}
-              <div className="factor-bar-row">
-                <div className="fbr-info">
-                  <span className="fbr-label">Drilling Telemetry &amp; WOB/RPM Profile</span>
-                  <span className="fbr-val">{currentWell.factors.drillingProfile}%</span>
-                </div>
-                <div className="fbr-track">
-                  <div className="fbr-fill fill-gold" style={{ width: `${currentWell.factors.drillingProfile}%` }} />
+                  <div className="fbr-fill fill-gold" style={{ width: `${currentWell.factors.context}%` }} />
                 </div>
               </div>
             </div>
@@ -321,19 +329,30 @@ export default function OffsetIntelligence({ project, onOpenModal }) {
               </div>
             )}
 
-            <button 
-              className="btn btn-primary btn-view-dossier"
-              onClick={() => onOpenModal({
-                title: `Analogue Well Dossier: ${currentWell.id}`,
-                subtitle: `Similarity Match: ${currentWell.similarity}% • Formation: ${currentWell.formation}`,
-                content: `Displaying composite historical dossier for ${currentWell.id}.\n\n• Similarity Score: ${currentWell.similarity}%\n• Historical events recorded: ${currentWell.eventsCount}\n• Primary event: ${currentWell.topEvent}\n• Forecast horizon: comparable depth corridor within the Volve field.\n\nEvidence is drawn from the Volve Daily Drilling Report (DDR) archive.` +
-                  (apiStatus === 'live' ? '\n\nComputed live by the NWIS Similarity Engine.' : '\n\nDemo fallback data shown — start the backend API for live computations.')
-              })}
-            >
-              <FileText size={16} />
-              <span>Inspect Full Historical Offset Dossier</span>
-              <ArrowRight size={15} />
-            </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 16 }}>
+              <button 
+                className="btn btn-primary btn-view-dossier"
+                style={{ background: '#10B981', color: '#FFFFFF' }}
+                onClick={() => handleGoToHistory(currentWell.id)}
+              >
+                <FileText size={16} />
+                <span>Inspect Historical DDR Records for {currentWell.id}</span>
+                <ArrowRight size={15} />
+              </button>
+
+              <button 
+                className="btn btn-secondary btn-view-dossier"
+                onClick={() => onOpenModal({
+                  title: `Analogue Well Dossier: ${currentWell.id}`,
+                  subtitle: `Weighted Similarity Index: ${currentWell.similarity}/100 • ${currentWell.formation}`,
+                  content: `Displaying composite historical dossier for ${currentWell.id}.\n\n• Weighted Similarity Index: ${currentWell.similarity}/100\n• Historical events recorded: ${currentWell.eventsCount}\n• Primary event: ${currentWell.topEvent}\n• Analogue corridor: comparable depth window within the Volve field.\n\nEvidence is drawn from the Volve Daily Drilling Report (DDR) archive.` +
+                    (apiStatus === 'live' ? '\n\nComputed live by the NWIS Similarity Engine.' : '\n\nDemo fallback data shown — start the backend API for live computations.')
+                })}
+              >
+                <FileText size={16} />
+                <span>View Full Similarity Breakdown</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>

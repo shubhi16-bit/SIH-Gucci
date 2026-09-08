@@ -27,18 +27,19 @@ export default function ProjectHub({
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   // Form state for creating a new well project
-  const [area, setArea] = useState('Rajasthan Block A');
-  const [formation, setFormation] = useState('Forties Sandstone');
+  // Form state for creating a new well project
+  const [area, setArea] = useState('Offshore Field 7 (Volve 15/9)');
+  const [formation, setFormation] = useState('Hugin Formation');
   const [depth, setDepth] = useState('3200');
   const [objective, setObjective] = useState('Exploration');
 
   // Real drilling workflow-state projects
   const workflowProjects = [
     {
-      id: 'kg-basin',
-      name: 'KG Basin D6',
-      field: 'Krishna-Godavari',
-      formation: 'Ravva Sandstone',
+      id: 'volve-f1',
+      name: '15/9-F-1 (Telemetry Replay)',
+      field: 'North Sea Block 15/9 (Volve)',
+      formation: 'Forties Sandstone',
       status: 'DRILLING',
       statusType: 'active',
       workflowType: 'Active Well Monitoring',
@@ -47,64 +48,49 @@ export default function ProjectHub({
       targetDepth: '3,450 m',
       risk: 'HIGH',
       riskLevel: 'high',
-      offsetWells: '8 Offset Wells',
-      offsetCount: 8,
+      offsetWells: '6 Offset Wells Correlated',
+      offsetCount: 6,
       defaultScreen: 'active_well',
-      desc: 'Real-time telemetry stream indicating torque micro-fluctuations matching offset stuck-pipe signatures.'
+      defaultRoute: '/active',
+      desc: 'WITSML telemetry replay indicating torque micro-fluctuations matching offset stuck-pipe signatures at 2,145m.'
     },
     {
-      id: 'raj-block-a',
-      name: 'Rajasthan Block A',
-      field: 'Barmer Basin',
-      formation: 'Fatehgarh Sandstone',
+      id: 'volve-p1',
+      name: 'Volve Block 15/9 Prospect',
+      field: 'North Sea Block 15/9',
+      formation: 'Hugin / Forties Sandstone',
       status: 'PLANNING',
       statusType: 'planning',
-      workflowType: 'New Exploration Area',
+      workflowType: 'New Well Planning',
       depthDisplay: 'Target: 3,200 m',
       depth: '3,200 m',
       targetDepth: '3,200 m',
       risk: 'LOW',
       riskLevel: 'low',
-      offsetWells: '5 Offset Wells',
-      offsetCount: 5,
+      offsetWells: '28 Catalog Wells',
+      offsetCount: 28,
       defaultScreen: 'planning',
-      desc: 'Pre-spud planning with 5 offset wells correlated. Candidate B selected for optimal trajectory feasibility.'
-    },
-    {
-      id: 'assam-shelf',
-      name: 'Assam Shelf Block B',
-      field: 'Upper Assam Basin',
-      formation: 'Barail Group',
-      status: 'APPRAISAL',
-      statusType: 'appraisal',
-      workflowType: 'Offset / Historical Analysis',
-      depthDisplay: 'Target: 3,850 m',
-      depth: '3,850 m',
-      targetDepth: '3,850 m',
-      risk: 'MEDIUM',
-      riskLevel: 'medium',
-      offsetWells: '12 Offset Wells',
-      offsetCount: 12,
-      defaultScreen: 'offsets',
-      desc: 'Regional multi-factor suitability scoring assessing fault intersections and offset pressure regimes.'
+      defaultRoute: '/planning',
+      desc: 'Pre-spud planning with 28 Volve well records indexed. Multi-factor candidate scoring against spacing constraints.'
     },
     {
       id: 'volve-replay',
-      name: 'Volve Field 15/9 Replay',
+      name: 'Volve Field 15/9-19 A Analogue',
       field: 'North Sea Block 15/9',
       formation: 'Hugin / Forties',
       status: 'HISTORICAL REPLAY',
       statusType: 'replay',
-      workflowType: 'WITSML Sensor Prototype',
-      depthDisplay: 'Current: 1,842 m',
-      depth: '1,842 m',
-      targetDepth: '3,400 m',
+      workflowType: 'DDR Incident Archive',
+      depthDisplay: 'TD: 3,200 m',
+      depth: '3,200 m',
+      targetDepth: '3,200 m',
       risk: 'MEDIUM',
       riskLevel: 'medium',
-      offsetWells: '7 Offset Wells',
-      offsetCount: 7,
-      defaultScreen: 'active_well',
-      desc: 'Standardized WITSML sensor stream calibrated against Daily Drilling Report #43 mud-loss records.'
+      offsetWells: '1,604 Historical Events',
+      offsetCount: 1604,
+      defaultScreen: 'historical',
+      defaultRoute: '/history',
+      desc: 'Historical Daily Drilling Reports indexing stuck pipe at 2,162m and mud losses at 2,850m.'
     }
   ];
 
@@ -113,19 +99,20 @@ export default function ProjectHub({
     const newProject = {
       id: `proj-${Date.now()}`,
       name: area,
-      field: area.includes('Rajasthan') ? 'Barmer Basin' : area.includes('KG') ? 'Krishna-Godavari' : 'Exploration Block',
+      field: 'North Sea Block 15/9 (Volve)',
       formation: formation,
       status: 'PLANNING',
       statusType: 'planning',
-      workflowType: 'New Exploration Area',
+      workflowType: 'New Exploration Prospect',
       depthDisplay: `Target: ${depth} m`,
       depth: `${depth} m`,
       targetDepth: `${depth} m`,
       risk: 'LOW',
       riskLevel: 'low',
-      offsetWells: '5 Offset Wells',
-      offsetCount: 5,
+      offsetWells: '28 Catalog Wells',
+      offsetCount: 28,
       defaultScreen: 'planning',
+      defaultRoute: '/planning',
       desc: `Newly initialized well planning prospect targeting ${formation} at ${depth}m.`
     };
     setShowCreateModal(false);
@@ -175,7 +162,7 @@ export default function ProjectHub({
         <div className="ertmac-actions-bar">
           <button 
             className="btn-main-action btn-action-plan"
-            onClick={() => onOpenWellOffset ? onOpenWellOffset() : setShowCreateModal(true)}
+            onClick={() => setShowCreateModal(true)}
             style={{ width: '100%', justifyContent: 'center' }}
           >
             <Plus size={18} color="#C0AA8A" />
@@ -191,7 +178,7 @@ export default function ProjectHub({
           <h2 className="section-title-label">Existing Projects</h2>
         </div>
 
-        {/* 4 Workflow-State Cards Grid */}
+        {/* 3 Workflow-State Cards Grid */}
         <div className="ertmac-cards-grid">
           {workflowProjects.map((p) => {
             const isDrilling = p.status === 'DRILLING';
@@ -201,7 +188,7 @@ export default function ProjectHub({
               <div 
                 key={p.id}
                 className={`ertmac-project-card status-${p.statusType}`}
-                onClick={() => onSelectProject(p, 'active_well')}
+                onClick={() => onSelectProject(p, p.defaultScreen || 'active_well')}
                 role="button"
                 tabIndex={0}
               >
@@ -270,10 +257,8 @@ export default function ProjectHub({
                       onChange={(e) => setArea(e.target.value)} 
                       className="form-select"
                     >
-                      <option value="Rajasthan Block A">Rajasthan Block A (Barmer Basin)</option>
-                      <option value="KG Basin D6">KG Basin D6 (Krishna-Godavari)</option>
-                      <option value="Assam Shelf Block B">Assam Shelf Block B (Upper Assam)</option>
-                      <option value="Offshore Field 7">Offshore Field 7 (Volve 15/9)</option>
+                      <option value="Offshore Field 7 (Volve 15/9)">Offshore Field 7 (Volve 15/9)</option>
+                      <option value="Custom Prospect (Volve Offset Reference)">Custom Prospect (Volve Offset Reference)</option>
                     </select>
                   </div>
 
@@ -284,10 +269,11 @@ export default function ProjectHub({
                       onChange={(e) => setFormation(e.target.value)} 
                       className="form-select"
                     >
+                      <option value="Hugin Formation">Hugin Formation (Jurassic)</option>
                       <option value="Forties Sandstone">Forties Sandstone (Paleocene)</option>
-                      <option value="Fatehgarh Sandstone">Fatehgarh Sandstone (Cretaceous)</option>
-                      <option value="Ravva Sandstone">Ravva Sandstone (Miocene)</option>
-                      <option value="Barail Group">Barail Group (Oligocene)</option>
+                      <option value="Smith Bank Formation">Smith Bank Formation (Triassic)</option>
+                      <option value="Skagerrak Formation">Skagerrak Formation (Triassic)</option>
+                      <option value="Lista Formation">Lista Formation (Paleocene)</option>
                     </select>
                   </div>
 

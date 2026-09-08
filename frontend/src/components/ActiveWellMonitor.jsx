@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { 
   Activity, 
   MapPin, 
@@ -13,6 +14,9 @@ import {
 } from 'lucide-react';
 
 export default function ActiveWellMonitor({ project, onOpenModal, onOpenAIDrawer, onNavigateToOffsets }) {
+  const { well } = useParams();
+  const activeWellName = well || project?.name || '15/9-F-1';
+
   // Channel toggle state for the parameter chart
   const [activeChannel, setActiveChannel] = useState('Torque'); // 'ROP' | 'WOB' | 'RPM' | 'Torque' | 'Pressure' | 'Flow' | 'Hookload'
 
@@ -41,18 +45,18 @@ export default function ActiveWellMonitor({ project, onOpenModal, onOpenAIDrawer
       {/* 1. Command Center Top Bar */}
       <div className="monitor-command-header">
         <div className="mch-left">
-          <span className="well-id-badge">{project?.name || '15/9-F-1'}</span>
+          <span className="well-id-badge">{activeWellName}</span>
           <span className="mch-title">DRILLING MONITOR</span>
           <span className="live-stream-badge">
             <span className="stream-dot" />
-            <span>WITSML LIVE STREAM</span>
+            <span>WITSML TELEMETRY REPLAY</span>
           </span>
         </div>
 
         <div className="mch-right">
           <div className="risk-level-banner risk-high">
             <span className="risk-icon">🔴</span>
-            <span className="risk-text">HIGH RISK DETECTED</span>
+            <span className="risk-text">ELEVATED OFFSET HAZARD CORRELATION</span>
           </div>
         </div>
       </div>
@@ -256,14 +260,14 @@ export default function ActiveWellMonitor({ project, onOpenModal, onOpenAIDrawer
           </div>
         </div>
 
-        {/* Quad 4: Risk Prediction */}
+        {/* Quad 4: Historical Offset Hazard Correlation */}
         <div className="quad-card quad-risk">
           <div className="quad-head">
             <div className="quad-title-wrap">
               <AlertTriangle size={16} color="#8F7C3A" />
-              <span>REAL-TIME RISK CLASSIFIER</span>
+              <span>DEPTH-INDEXED HAZARD INDEX</span>
             </div>
-            <span className="quad-sub-badge">Model Confidence: 94%</span>
+            <span className="quad-sub-badge">Volve Offset Calibration (2,150m)</span>
           </div>
 
           <div className="risk-bars-stack">
@@ -274,7 +278,7 @@ export default function ActiveWellMonitor({ project, onOpenModal, onOpenAIDrawer
                   <span className="risk-status-icon">🔴</span>
                   <span className="risk-name">STUCK PIPE</span>
                 </div>
-                <span className="risk-severity-pill pill-high">HIGH &bull; 0.86</span>
+                <span className="risk-severity-pill pill-high">HIGH &bull; 86/100 Index</span>
               </div>
               <div className="risk-meter-track">
                 <div className="risk-meter-fill fill-high" style={{ width: '86%' }} />
@@ -289,7 +293,7 @@ export default function ActiveWellMonitor({ project, onOpenModal, onOpenAIDrawer
                   <span className="risk-status-icon">🟡</span>
                   <span className="risk-name">PACK-OFF</span>
                 </div>
-                <span className="risk-severity-pill pill-med">MEDIUM &bull; 0.54</span>
+                <span className="risk-severity-pill pill-med">MEDIUM &bull; 54/100 Index</span>
               </div>
               <div className="risk-meter-track">
                 <div className="risk-meter-fill fill-med" style={{ width: '54%' }} />
@@ -304,7 +308,7 @@ export default function ActiveWellMonitor({ project, onOpenModal, onOpenAIDrawer
                   <span className="risk-status-icon">🟢</span>
                   <span className="risk-name">MUD LOSS</span>
                 </div>
-                <span className="risk-severity-pill pill-low">LOW &bull; 0.22</span>
+                <span className="risk-severity-pill pill-low">LOW &bull; 22/100 Index</span>
               </div>
               <div className="risk-meter-track">
                 <div className="risk-meter-fill fill-low" style={{ width: '22%' }} />
@@ -443,7 +447,7 @@ export default function ActiveWellMonitor({ project, onOpenModal, onOpenAIDrawer
           <button 
             className="btn btn-secondary btn-evidence"
             onClick={() => onOpenModal({
-              title: "Daily Drilling Report #43 Ground Truth",
+              title: "Daily Drilling Report #43 Historical Record",
               subtitle: "Well 15/9-19 A Differential Sticking Incident",
               content: "Incident Date: 2008-04-12\nDepth: 2,162m MD\nFormation: Forties Sandstone\n\nExcerpt from Morning Tour Shift Notes:\n'While drilling ahead at 2,162m MD, experienced rapid torque increase from 5 kN·m to 9.2 kN·m. Standpipe pressure rose by 350 psi. Attempted to pull up with 60 klbf overpull with no movement. Pumped 40 bbl lubricating pill and initiated jarring operations.'"
             })}
@@ -454,10 +458,10 @@ export default function ActiveWellMonitor({ project, onOpenModal, onOpenAIDrawer
 
           <button 
             className="btn btn-primary btn-ask-ai"
-            onClick={() => onOpenAIDrawer ? onOpenAIDrawer("Why is 15/9-F-1 classified as high risk for stuck pipe at 2,150m?") : null}
+            onClick={() => onOpenAIDrawer ? onOpenAIDrawer("Why is 15/9-F-1 classified as high risk for stuck pipe near 2,150m?") : null}
           >
             <Sparkles size={15} />
-            <span>Ask AI &rarr;</span>
+            <span>Ask eRTMAC Assistant &rarr;</span>
           </button>
         </div>
       </div>

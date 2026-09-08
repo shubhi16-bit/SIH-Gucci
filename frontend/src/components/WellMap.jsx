@@ -1,18 +1,18 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import Map, {
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import MapGL, {
   Marker,
   Popup,
   NavigationControl,
 } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { nearbyWells, candidateLocations } from '../data/wellData';
+import { nearbyWells } from '../data/wellData';
 import { searchWells } from '../data/wellData';
 import { searchLocation } from '../data/geocode';
 
 const INITIAL_VIEW = {
-  longitude: 95.32,
-  latitude: 27.29,
-  zoom: 11.5,
+  longitude: 1.8875,
+  latitude: 58.4416,
+  zoom: 9.5,
 };
 
 const OSM_STYLE = {
@@ -63,14 +63,40 @@ function statusBadgeColor(status) {
   }
 }
 
+function groupWellsByCluster(wellsList) {
+  const clustersMap = new Map();
+  for (const w of (wellsList || [])) {
+    const key = `${Number(w.lat).toFixed(5)},${Number(w.lng).toFixed(5)}`;
+    if (!clustersMap.has(key)) {
+      clustersMap.set(key, {
+        key,
+        lat: w.lat,
+        lng: w.lng,
+        wells: [],
+        hasHighRisk: false,
+        hasMedRisk: false,
+        maxEvents: 0,
+      });
+    }
+    const c = clustersMap.get(key);
+    c.wells.push(w);
+    if (w.risk === 'high') c.hasHighRisk = true;
+    if (w.risk === 'medium') c.hasMedRisk = true;
+    if ((w.eventsCount || 0) > c.maxEvents) c.maxEvents = w.eventsCount;
+  }
+  return Array.from(clustersMap.values());
+}
+
 export default function WellMap({
   selectedWellId,
   onWellSelect,
-  selectedCandidateIds,
+  selectedCandidateIds = [],
   onCandidateToggle,
   referencePoint,
   onReferenceChange,
-  isDark = false,
+  candidates = [],
+  wells = nearbyWells,
+  isDark = true,
 }) {
   const mapRef = useRef(null);
   const [search, setSearch] = useState('');
@@ -79,17 +105,20 @@ export default function WellMap({
   const [searching, setSearching] = useState(false);
   const [hoveredWell, setHoveredWell] = useState(null);
   const [popupPos, setPopupPos] = useState(null);
+  const [activeCluster, setActiveCluster] = useState(null);
   const debounce = useRef(null);
+
+  const clusters = useMemo(() => groupWellsByCluster(wells), [wells]);
 
   const flyToWell = useCallback((well) => {
     mapRef.current?.flyTo({
       center: [well.lng, well.lat],
-      zoom: 13.5,
+      zoom: 12.0,
       duration: 900,
       essential: true,
     });
-    onWellSelect(well.id);
-    onReferenceChange({ lat: well.lat, lng: well.lng, name: well.name });
+    onWellSelect?.(well.id);
+    onReferenceChange?.({ lat: well.lat, lng: well.lng, name: well.name });
   }, [onWellSelect, onReferenceChange]);
 
   const onSearchChange = (e) => {
@@ -104,9 +133,9 @@ export default function WellMap({
     }
     setSearching(true);
     debounce.current = setTimeout(async () => {
-      const wells = searchWells(q.trim());
+      const foundWells = searchWells(q.trim());
       const places = await searchLocation(q.trim());
-      setResults([...wells, ...places]);
+      setResults([...foundWells, ...places]);
       setOpen(true);
       setSearching(false);
     }, 220);
@@ -167,24 +196,25 @@ export default function WellMap({
         }
       `}</style>
 
-      <Map
+      <MapGL
         ref={mapRef}
         initialViewState={INITIAL_VIEW}
         mapStyle={OSM_STYLE}
         style={{ width: '100%', height: '100%' }}
         attributionControl={false}
       >
-        {nearbyWells
-          .filter((w) => w.risk !== 'low')
-          .map((w) => {
-            const isHigh = w.risk === 'high';
+        {/* Halos for clusters containing high-risk / >= 20 DDR event wells */}
+        {clusters
+          .filter((c) => c.hasHighRisk || c.maxEvents >= 20)
+          .map((c) => {
+            const isHigh = c.hasHighRisk;
             const color = isHigh ? '#ff4d4d' : '#fbbf24';
             return (
-              <Marker key={`halo-${w.id}`} longitude={w.lng} latitude={w.lat} anchor="center">
+              <Marker key={`halo-${c.key}`} longitude={c.lng} latitude={c.lat} anchor="center">
                 <div
                   style={{
-                    width: isHigh ? 50 : 36,
-                    height: isHigh ? 50 : 36,
+                    width: isHigh ? 54 : 40,
+                    height: isHigh ? 54 : 40,
                     borderRadius: '50%',
                     backgroundColor: color,
                     opacity: isHigh ? 0.22 : 0.15,
@@ -196,9 +226,123 @@ export default function WellMap({
             );
           })}
 
-        {nearbyWells.map((w) => {
-          const cat = wellCategory(w);
+        {/* Platform Cluster / Well Markers */}
+        {clusters.map((c) => {
+          const isMulti = c.wells.length > 1;
+          const isSelectedCluster = c.wells.some((w) => w.id === selectedWellId);
+          const topWell = isSelectedCluster
+            ? c.wells.find((w) => w.id === selectedWellId)
+            : c.wells[0];
+
+          let cat = 'historical';
+          if (c.hasHighRisk) {
+            cat = 'problem';
+          } else if (c.wells.some((w) => w.status === 'completed' || w.status === 'drilling')) {
+            cat = 'success';
+          }
           const color = wellColor(cat, isDark);
+
+          if (isMulti) {
+            // Stacked Multi-well Platform Cluster Marker
+            const baseSize = 24;
+            const size = isSelectedCluster ? baseSize * 1.3 : baseSize;
+            const glow = isDark
+              ? isSelectedCluster
+                ? `0 0 0 4px ${color}55, 0 0 16px ${color}aa, 0 0 24px ${color}55`
+                : `0 0 8px ${color}66, 0 2px 6px rgba(0,0,0,0.7)`
+              : isSelectedCluster
+                ? `0 0 0 4px ${color}44, 0 2px 8px ${color}55`
+                : `0 1px 4px rgba(0,0,0,0.3)`;
+
+            return (
+              <Marker key={`cluster-${c.key}`} longitude={c.lng} latitude={c.lat} anchor="center">
+                <div
+                  role="button"
+                  tabIndex={0}
+                  title={`Platform Slot Cluster: ${c.wells.length} wellbores (${c.wells.map(x => x.id).join(', ')})`}
+                  aria-label={`Cluster with ${c.wells.length} wells`}
+                  onClick={() => {
+                    setActiveCluster(c);
+                    setHoveredWell(null);
+                    setPopupPos(null);
+                    if (!isSelectedCluster) {
+                      onWellSelect?.(c.wells[0].id);
+                      onReferenceChange?.({ lat: c.lat, lng: c.lng, name: c.wells[0].name });
+                    }
+                  }}
+                  onMouseEnter={() => {
+                    if (!activeCluster) {
+                      setHoveredWell(topWell);
+                      setPopupPos({ lat: c.lat, lng: c.lng, clusterCount: c.wells.length });
+                    }
+                  }}
+                  onMouseLeave={() => {
+                    if (!activeCluster) {
+                      setHoveredWell(null);
+                      setPopupPos(null);
+                    }
+                  }}
+                  onKeyDown={(e) => e.key === 'Enter' && setActiveCluster(c)}
+                  style={{
+                    position: 'relative',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: size + 6,
+                    height: size + 6,
+                  }}
+                >
+                  {/* Stacked background disk for depth */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 1,
+                      left: 1,
+                      width: size,
+                      height: size,
+                      borderRadius: '50%',
+                      backgroundColor: isDark ? '#18181b' : '#e4e4e7',
+                      border: `1.5px solid ${color}66`,
+                      zIndex: 1,
+                    }}
+                  />
+                  {/* Main cluster circle */}
+                  <div
+                    style={{
+                      width: size,
+                      height: size,
+                      borderRadius: '50%',
+                      backgroundColor: isDark ? '#09090b' : '#ffffff',
+                      border: `${isSelectedCluster ? 3 : 2}px solid ${color}`,
+                      boxShadow: glow,
+                      position: 'relative',
+                      zIndex: 2,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'transform 0.15s, box-shadow 0.2s',
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: isSelectedCluster ? 11 : 9.5,
+                        fontWeight: 900,
+                        color: color,
+                        fontFamily: 'monospace',
+                        lineHeight: 1,
+                      }}
+                    >
+                      {c.wells.length}
+                    </span>
+                  </div>
+                </div>
+              </Marker>
+            );
+          }
+
+          // Single well marker
+          const w = c.wells[0];
           const isSelected = w.id === selectedWellId;
           const base = isDark
             ? cat === 'problem' ? 22 : cat === 'success' ? 18 : 14
@@ -221,19 +365,25 @@ export default function WellMap({
                 title={w.name}
                 aria-label={`Well ${w.id}`}
                 onClick={() => {
-                  onWellSelect(w.id);
+                  setActiveCluster(null);
+                  onWellSelect?.(w.id);
                   setHoveredWell(w);
                   setPopupPos({ lat: w.lat, lng: w.lng });
+                  onReferenceChange?.({ lat: w.lat, lng: w.lng, name: w.name });
                 }}
                 onMouseEnter={() => {
-                  setHoveredWell(w);
-                  setPopupPos({ lat: w.lat, lng: w.lng });
+                  if (!activeCluster) {
+                    setHoveredWell(w);
+                    setPopupPos({ lat: w.lat, lng: w.lng });
+                  }
                 }}
                 onMouseLeave={() => {
-                  setHoveredWell(null);
-                  setPopupPos(null);
+                  if (!activeCluster) {
+                    setHoveredWell(null);
+                    setPopupPos(null);
+                  }
                 }}
-                onKeyDown={(e) => e.key === 'Enter' && onWellSelect(w.id)}
+                onKeyDown={(e) => e.key === 'Enter' && onWellSelect?.(w.id)}
                 style={{
                   width: size,
                   height: size,
@@ -271,18 +421,24 @@ export default function WellMap({
           );
         })}
 
-        {candidateLocations.map((c) => {
-          const isOn = selectedCandidateIds.includes(c.id);
+        {/* Dynamic Candidates loaded from PlanningEngine only */}
+        {(candidates || []).map((c) => {
+          const cId = c.candidate_id || c.id || '';
+          const cLat = Number(c.lat || c.latitude || 0);
+          const cLng = Number(c.lon || c.lng || c.longitude || 0);
+          const cName = c.name || `Candidate ${cId}`;
+          const cDisplay = (c.candidate_id ? c.candidate_id.replace('CAND-', '').slice(0, 4) : cId.replace('CL-', '').replace('CAND-', ''));
+          const isOn = (selectedCandidateIds || []).includes(cId);
           const pinColor = pal.candidate;
           return (
-            <Marker key={c.id} longitude={c.lng} latitude={c.lat} anchor="bottom">
+            <Marker key={cId} longitude={cLng} latitude={cLat} anchor="bottom">
               <div
                 role="button"
                 tabIndex={0}
-                title={c.name}
-                aria-label={`Candidate ${c.id}`}
-                onClick={() => onCandidateToggle(c.id)}
-                onKeyDown={(e) => e.key === 'Enter' && onCandidateToggle(c.id)}
+                title={cName}
+                aria-label={`Candidate ${cId}`}
+                onClick={() => onCandidateToggle && onCandidateToggle(cId)}
+                onKeyDown={(e) => e.key === 'Enter' && onCandidateToggle && onCandidateToggle(cId)}
                 style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
               >
                 <svg
@@ -322,7 +478,7 @@ export default function WellMap({
                     fill={isOn ? '#fff' : pinColor}
                     fontFamily="system-ui, sans-serif"
                   >
-                    {c.id.replace('CL-', '')}
+                    {cDisplay || 'C'}
                   </text>
                 </svg>
                 <span
@@ -338,13 +494,14 @@ export default function WellMap({
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  {c.name.replace('Candidate ', '')}
+                  {cName.replace('Candidate ', '')}
                 </span>
               </div>
             </Marker>
           );
         })}
 
+        {/* Reference Anchor Marker */}
         {referencePoint && (
           <Marker longitude={referencePoint.lng} latitude={referencePoint.lat} anchor="center">
             <div
@@ -360,7 +517,127 @@ export default function WellMap({
           </Marker>
         )}
 
-        {hoveredWell && popupPos && (
+        {/* Interactive Platform Slot Cluster Popup */}
+        {activeCluster && (
+          <Popup
+            longitude={activeCluster.lng}
+            latitude={activeCluster.lat}
+            anchor="bottom"
+            offset={16}
+            closeButton={true}
+            onClose={() => setActiveCluster(null)}
+            style={{ zIndex: 60 }}
+            className="well-popup"
+          >
+            <div
+              style={{
+                background: pal.panelBg,
+                border: `1px solid ${pal.panelBorder}`,
+                borderRadius: 12,
+                padding: '12px 14px',
+                minWidth: 260,
+                maxWidth: 320,
+                fontFamily: 'system-ui, sans-serif',
+                color: pal.text,
+                boxShadow: '0 8px 30px rgba(0,0,0,0.35)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span
+                    style={{
+                      width: 9,
+                      height: 9,
+                      borderRadius: '50%',
+                      backgroundColor: activeCluster.hasHighRisk ? '#ef4444' : '#22c55e',
+                    }}
+                  />
+                  <span style={{ fontWeight: 800, fontSize: 12, letterSpacing: '0.5px' }}>
+                    PLATFORM SLOT CLUSTER
+                  </span>
+                </div>
+                <span style={{ fontSize: 10, fontFamily: 'monospace', color: pal.muted, background: 'rgba(255,255,255,0.08)', padding: '2px 6px', borderRadius: 4 }}>
+                  {activeCluster.wells.length} Wellbores
+                </span>
+              </div>
+
+              <div style={{ fontSize: 10, color: pal.muted, marginBottom: 8, fontFamily: 'monospace' }}>
+                {activeCluster.lat.toFixed(5)}°N, {activeCluster.lng.toFixed(5)}°E
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 200, overflowY: 'auto' }}>
+                {activeCluster.wells.map((w) => {
+                  const isCurrent = w.id === selectedWellId;
+                  const cat = wellCategory(w);
+                  const color = wellColor(cat, isDark);
+                  return (
+                    <div
+                      key={w.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => {
+                        onWellSelect?.(w.id);
+                        onReferenceChange?.({ lat: w.lat, lng: w.lng, name: w.name });
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          onWellSelect?.(w.id);
+                          onReferenceChange?.({ lat: w.lat, lng: w.lng, name: w.name });
+                        }
+                      }}
+                      style={{
+                        padding: '6px 8px',
+                        borderRadius: 6,
+                        background: isCurrent ? (isDark ? 'rgba(170,190,83,0.18)' : 'rgba(140,158,58,0.15)') : 'rgba(255,255,255,0.03)',
+                        border: isCurrent ? `1px solid ${pal.accent}` : `1px solid ${pal.panelBorder}`,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        transition: 'background 0.15s',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span
+                          style={{
+                            width: 7,
+                            height: 7,
+                            borderRadius: cat === 'historical' ? 1 : '50%',
+                            backgroundColor: color,
+                            flexShrink: 0,
+                          }}
+                        />
+                        <div>
+                          <div style={{ fontWeight: isCurrent ? 800 : 700, fontSize: 11, color: isCurrent ? pal.accent : pal.text }}>
+                            {w.id}
+                          </div>
+                          <div style={{ fontSize: 9, color: pal.muted }}>
+                            {w.wellType} &bull; {w.depth ? `${w.depth.toLocaleString()}m` : '—'}
+                          </div>
+                        </div>
+                      </div>
+                      <span
+                        style={{
+                          fontSize: 9,
+                          fontWeight: 700,
+                          padding: '1px 5px',
+                          borderRadius: 4,
+                          background: w.risk === 'high' ? 'rgba(239,68,68,0.2)' : 'rgba(34,197,94,0.15)',
+                          color: w.risk === 'high' ? '#ef4444' : '#22c55e',
+                        }}
+                      >
+                        {w.risk === 'high' ? 'Hazard' : w.risk === 'medium' ? 'Moderate' : 'Normal'}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </Popup>
+        )}
+
+        {/* Hovered Single Well Tooltip */}
+        {hoveredWell && popupPos && !activeCluster && (
           <Popup
             longitude={popupPos.lng}
             latitude={popupPos.lat}
@@ -383,19 +660,26 @@ export default function WellMap({
                 boxShadow: '0 4px 20px rgba(0,0,0,0.18)',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
-                <span
-                  style={{
-                    width: 10,
-                    height: 10,
-                    borderRadius: '50%',
-                    backgroundColor: wellColor(wellCategory(hoveredWell), isDark),
-                    flexShrink: 0,
-                  }}
-                />
-                <span style={{ fontWeight: 700, fontSize: 13, letterSpacing: '0.3px' }}>
-                  {hoveredWell.id}
-                </span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 7, marginBottom: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span
+                    style={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: '50%',
+                      backgroundColor: wellColor(wellCategory(hoveredWell), isDark),
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span style={{ fontWeight: 700, fontSize: 13, letterSpacing: '0.3px' }}>
+                    {hoveredWell.id}
+                  </span>
+                </div>
+                {popupPos.clusterCount > 1 && (
+                  <span style={{ fontSize: 9, fontWeight: 700, color: pal.accent, background: pal.accentSoft, padding: '1px 5px', borderRadius: 4 }}>
+                    {popupPos.clusterCount} wells on slot
+                  </span>
+                )}
               </div>
               <div style={{ fontSize: 11, color: pal.muted, marginBottom: 8 }}>
                 {hoveredWell.name}
@@ -405,26 +689,31 @@ export default function WellMap({
                 <span style={{ fontWeight: 600, color: statusBadgeColor(hoveredWell.status), textTransform: 'capitalize' }}>
                   {hoveredWell.status}
                 </span>
-                <span style={{ color: pal.muted }}>Risk</span>
+                <span style={{ color: pal.muted }}>Hazard</span>
                 <span style={{ fontWeight: 600, textTransform: 'capitalize', color: wellColor(wellCategory(hoveredWell), isDark) }}>
-                  {hoveredWell.risk}
+                  {hoveredWell.risk === 'high' ? 'Hazard Offset' : hoveredWell.risk === 'medium' ? 'Moderate' : 'Normal'}
                 </span>
                 <span style={{ color: pal.muted }}>Depth</span>
-                <span style={{ fontWeight: 600 }}>{hoveredWell.depth.toLocaleString()} m</span>
+                <span style={{ fontWeight: 600 }}>{hoveredWell.depth ? hoveredWell.depth.toLocaleString() : '—'} m</span>
                 <span style={{ color: pal.muted }}>Formation</span>
-                <span style={{ fontWeight: 600 }}>{hoveredWell.formation}</span>
-                <span style={{ color: pal.muted }}>Stuck&nbsp;Risk</span>
-                <span style={{ fontWeight: 600 }}>{hoveredWell.stuckPipeRisk}%</span>
-                <span style={{ color: pal.muted }}>Mud Loss</span>
-                <span style={{ fontWeight: 600 }}>{hoveredWell.mudLossRisk}%</span>
+                <span style={{ fontWeight: 600 }}>{hoveredWell.formation || 'Formation info where available'}</span>
+                <span style={{ color: pal.muted }}>DDR Events</span>
+                <span style={{ fontWeight: 600 }}>{hoveredWell.eventsCount || 0} indexed</span>
+                {hoveredWell.topEvent && (
+                  <>
+                    <span style={{ color: pal.muted }}>Top Event</span>
+                    <span style={{ fontWeight: 600, fontSize: 10, color: pal.text }}>{hoveredWell.topEvent}</span>
+                  </>
+                )}
               </div>
             </div>
           </Popup>
         )}
 
         <NavigationControl position="bottom-right" visualizePitch={false} />
-      </Map>
+      </MapGL>
 
+      {/* Search Bar */}
       <div className="wellmap-search" style={{ position: 'absolute', left: 16, top: 16, zIndex: 20, width: 288 }}>
         <div
           className="wellmap-search-bar"
@@ -483,18 +772,18 @@ export default function WellMap({
             {!search.trim() ? (
               <div style={{ padding: '8px 0' }}>
                 <div style={{ padding: '4px 12px 4px', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: pal.muted }}>
-                  Recommended Areas (Has Data)
+                  Recommended Volve Sectors
                 </div>
                 {[
-                  { name: 'Naharkatia Field, Assam', lat: 27.283, lng: 95.333 },
-                  { name: 'Moran Field, Assam', lat: 27.185, lng: 94.931 },
-                  { name: 'Digboi Field, Assam', lat: 27.382, lng: 95.63 },
+                  { name: 'Volve Field Center (15/9-F Platform)', lat: 58.4416, lng: 1.8875 },
+                  { name: '15/9-19 Exploration & Appraisal Sector', lat: 58.4359, lng: 1.9297 },
+                  { name: '15/9-F-10 ERD Well Zone', lat: 58.44158, lng: 1.88752 },
                 ].map((p, i) => (
                   <button
                     key={`rec-${i}`}
                     onMouseDown={() => {
-                      onReferenceChange({ lat: p.lat, lng: p.lng, name: p.name });
-                      mapRef.current?.flyTo({ center: [p.lng, p.lat], zoom: 12, duration: 900 });
+                      onReferenceChange?.({ lat: p.lat, lng: p.lng, name: p.name });
+                      mapRef.current?.flyTo({ center: [p.lng, p.lat], zoom: 10.5, duration: 900 });
                       setSearch('');
                       setOpen(false);
                     }}
@@ -529,8 +818,8 @@ export default function WellMap({
                       if (w) {
                         flyToWell(w);
                       } else if (p) {
-                        onReferenceChange({ lat: p.lat, lng: p.lng, name: p.name });
-                        mapRef.current?.flyTo({ center: [p.lng, p.lat], zoom: 12, duration: 900 });
+                        onReferenceChange?.({ lat: p.lat, lng: p.lng, name: p.name });
+                        mapRef.current?.flyTo({ center: [p.lng, p.lat], zoom: 10.5, duration: 900 });
                       }
                       setSearch('');
                       setOpen(false);
@@ -576,6 +865,7 @@ export default function WellMap({
         )}
       </div>
 
+      {/* Top Right Status Indicator */}
       <div
         className="wellmap-live"
         style={{
@@ -602,9 +892,10 @@ export default function WellMap({
           <span style={{ position: 'absolute', height: '100%', width: '100%', borderRadius: '50%', opacity: 0.6, backgroundColor: pal.accent, animation: 'wellmap-ping 1.2s cubic-bezier(0,0,0.2,1) infinite' }} />
           <span style={{ position: 'relative', height: 8, width: 8, borderRadius: '50%', backgroundColor: pal.accent }} />
         </span>
-        LIVE · OSM
+        MAP · OSM
       </div>
 
+      {/* Floating Map Legend */}
       <div
         className="wellmap-legend"
         style={{
@@ -624,19 +915,21 @@ export default function WellMap({
           Map Legend
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <LegendRow icon={<svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill={isDark ? '#22c55e' : '#16a34a'} stroke="white" strokeWidth="1.5" /></svg>} label="Active Well" color={pal.text} />
-          <LegendRow icon={<svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill={isDark ? '#ef4444' : '#dc2626'} stroke="white" strokeWidth="1.5" /><circle cx="8" cy="8" r="2.5" fill="white" /></svg>} label="High-Risk Well" color={pal.text} />
-          <LegendRow icon={<svg width="16" height="16" viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="12" rx="2" fill="none" stroke={isDark ? '#94a3b8' : '#6b7280'} strokeWidth="1.8" /><line x1="4.5" y1="4.5" x2="11.5" y2="11.5" stroke={isDark ? '#94a3b8' : '#6b7280'} strokeWidth="1.8" strokeLinecap="round" /><line x1="11.5" y1="4.5" x2="4.5" y2="11.5" stroke={isDark ? '#94a3b8' : '#6b7280'} strokeWidth="1.8" strokeLinecap="round" /></svg>} label="Inactive Well" color={pal.text} />
-          <LegendRow icon={<svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="rgba(239,68,68,0.15)" stroke="#ef4444" strokeWidth="1.5" /></svg>} label="Risk Zone Halo" color={pal.text} />
-          <LegendRow icon={<svg width="14" height="20" viewBox="0 0 14 20"><circle cx="7" cy="7" r="6" fill={pal.candidate} /><path d="M 3 12 Q 7 20 7 20 Q 7 20 11 12 Z" fill={pal.candidate} /><text x="7" y="10" textAnchor="middle" fontSize="5.5" fontWeight="700" fill="white" fontFamily="system-ui">CL</text></svg>} label="Candidate Site" color={pal.text} />
+          <LegendRow icon={<svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="#09090b" stroke={isDark ? '#22c55e' : '#16a34a'} strokeWidth="2" /><text x="8" y="11" textAnchor="middle" fontSize="8" fontWeight="800" fill={isDark ? '#22c55e' : '#16a34a'} fontFamily="monospace">4</text></svg>} label="Platform Slot Cluster (Stacked Wells)" color={pal.text} />
+          <LegendRow icon={<svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill={isDark ? '#22c55e' : '#16a34a'} stroke="white" strokeWidth="1.5" /></svg>} label="Development Well (Single)" color={pal.text} />
+          <LegendRow icon={<svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill={isDark ? '#ef4444' : '#dc2626'} stroke="white" strokeWidth="1.5" /><circle cx="8" cy="8" r="2.5" fill="white" /></svg>} label="Hazard Offset Well (DDR Events)" color={pal.text} />
+          <LegendRow icon={<svg width="16" height="16" viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="12" rx="2" fill="none" stroke={isDark ? '#94a3b8' : '#6b7280'} strokeWidth="1.8" /><line x1="4.5" y1="4.5" x2="11.5" y2="11.5" stroke={isDark ? '#94a3b8' : '#6b7280'} strokeWidth="1.8" strokeLinecap="round" /><line x1="11.5" y1="4.5" x2="4.5" y2="11.5" stroke={isDark ? '#94a3b8' : '#6b7280'} strokeWidth="1.8" strokeLinecap="round" /></svg>} label="Exploration / Appraisal Well" color={pal.text} />
+          <LegendRow icon={<svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="rgba(239,68,68,0.15)" stroke="#ef4444" strokeWidth="1.5" /></svg>} label="Historical DDR Risk Zone Halo" color={pal.text} />
+          <LegendRow icon={<svg width="14" height="20" viewBox="0 0 14 20"><circle cx="7" cy="7" r="6" fill={pal.candidate} /><path d="M 3 12 Q 7 20 7 20 Q 7 20 11 12 Z" fill={pal.candidate} /><text x="7" y="10" textAnchor="middle" fontSize="5.5" fontWeight="700" fill="white" fontFamily="system-ui">CL</text></svg>} label="Candidate Planning Site" color={pal.text} />
         </div>
         <div style={{ marginTop: 10, fontSize: 9, color: pal.pale }}>
           © OpenStreetMap contributors
         </div>
       </div>
 
+      {/* Bottom Status Bar for Selected Well */}
       {selectedWellId && (() => {
-        const w = nearbyWells.find((x) => x.id === selectedWellId);
+        const w = wells.find((x) => x.id === selectedWellId) || nearbyWells.find((x) => x.id === selectedWellId);
         if (!w) return null;
         const cat = wellCategory(w);
         const color = wellColor(cat, isDark);
@@ -665,8 +958,8 @@ export default function WellMap({
           >
             <span style={{ color, fontWeight: 700 }}>{w.id}</span>
             {' · '}{w.status.toUpperCase()}{' · '}
-            <span style={{ color }}>{w.risk.toUpperCase()} RISK</span>
-            {' · '}{w.depth.toLocaleString()} m · {w.formation}
+            <span style={{ color }}>{w.risk === 'high' ? 'HAZARD OFFSET' : w.risk === 'medium' ? 'MODERATE' : 'NORMAL'}</span>
+            {' · '}{w.depth ? w.depth.toLocaleString() : '—'} m · {w.formation || 'Formation info where available'}
           </div>
         );
       })()}

@@ -4,10 +4,10 @@ import { Compass, Layers, Activity, ArrowRight, CheckCircle2, ChevronRight } fro
 export default function StreamlinedFeatures({ onOpenModal }) {
   const lifecycleSteps = [
     { num: "01", name: "Explore", q: "Where to drill?" },
-    { num: "02", name: "Plan", q: "Safest trajectory?" },
-    { num: "03", name: "Predict", q: "Offset hazards?" },
-    { num: "04", name: "Drill", q: "Live telemetry?" },
-    { num: "05", name: "Learn", q: "Institutional memory" },
+    { num: "02", name: "Plan", q: "Optimal spacing?" },
+    { num: "03", name: "Assess", q: "Depth-indexed hazards?" },
+    { num: "04", name: "Monitor", q: "Replayed telemetry?" },
+    { num: "05", name: "Evidence", q: "DDR incident archive" },
   ];
 
   return (
@@ -18,7 +18,7 @@ export default function StreamlinedFeatures({ onOpenModal }) {
           <div className="streamlined-header">
             <h2 className="streamlined-title">Continuous Decision Support Across the Well Lifecycle</h2>
             <p className="streamlined-sub">
-              Turning historical drilling experience and geospatial intelligence into actionable decisions before and during drilling.
+              Turning 28 Volve well records and 1,604 historical Daily Drilling Reports into actionable engineering decisions before and during drilling.
             </p>
           </div>
 
@@ -46,7 +46,7 @@ export default function StreamlinedFeatures({ onOpenModal }) {
               onClick={() => onOpenModal({
                 title: "Phase 1: Candidate Location Ranking",
                 subtitle: "Where should we drill? — Multi-Factor Suitability Scoring",
-                content: "Evaluates surface accessibility (roads, terrain, water bodies, infrastructure) alongside subsurface offset well intelligence to rank candidate drilling locations.\n\n• Candidate A: 78/100 (Moderate offset similarity)\n• Candidate B: 88/100 (RECOMMENDED — 4 comparable offset wells, low historical risk, high surface access)\n• Candidate C: 71/100 (Infrastructure constraints)"
+                content: "Evaluates surface accessibility alongside subsurface offset well intelligence to rank candidate drilling locations.\n\n• Candidate LOC-1: 100/100 (Optimal spacing and offset cluster density)\n• Candidate LOC-2: 88/100 (Nearby offset well 15/9-19 A with low historical risk)\n• Candidate LOC-3: 74/100 (Boundary clearance verified)"
               })}
             >
               <div className="triad-icon-box">
@@ -55,14 +55,14 @@ export default function StreamlinedFeatures({ onOpenModal }) {
               <span className="triad-num">PHASE 01 / EXPLORATION</span>
               <h3 className="triad-card-title">Candidate Location Ranking</h3>
               <p className="triad-card-desc">
-                Combines surface accessibility and subsurface history to score and rank drilling locations.
+                Generates and scores feasible drilling locations using spatial constraints and offset well density.
               </p>
               <div className="triad-pill-highlight">
                 <CheckCircle2 size={13} color="#8F7C3A" />
-                <span>Recommendation: Candidate B (88/100)</span>
+                <span>Deterministic Scoring (0–100 Index)</span>
               </div>
               <div className="triad-link">
-                <span>Inspect Candidate Engine</span>
+                <span>Inspect Planning Engine</span>
                 <ArrowRight size={14} />
               </div>
             </div>
@@ -71,25 +71,25 @@ export default function StreamlinedFeatures({ onOpenModal }) {
             <div 
               className="triad-card" 
               onClick={() => onOpenModal({
-                title: "Phase 2: Trajectory & Risk Screening",
-                subtitle: "Which path is safest? — Proactive Hazard Avoidance",
-                content: "Screens the proposed 3D trajectory against historical risk zones before spudding. Overlays lithology and pore pressure data from Volve Field & BSEE analogues.\n\n• Trajectory A: Intersects historical stuck-pipe zone at 2,420m (3 offset incidents).\n• Trajectory B (Adjusted): Re-routed 60m east — historical risk reduced to LOW."
+                title: "Phase 2: Offset Intelligence & Hazard Screening",
+                subtitle: "Which offset wells are most comparable? — Multi-Factor Analogue Radar",
+                content: "Scores offset wellbores across 5 weighted dimensions (geography, depth, formation, trajectory, context) against the proposed prospect.\n\n• 15/9-19 A: Weighted Similarity Index 66.5/100 (Encountered stuck pipe at 2,162m MD)\n• 15/9-F-11: Weighted Similarity Index 65.2/100 (Pack-off at 2,198m MD)\n• 15/9-F-4: Weighted Similarity Index 64.8/100 (Kick at 1,840m MD)"
               })}
             >
               <div className="triad-icon-box">
                 <Layers size={24} color="#8F7C3A" />
               </div>
-              <span className="triad-num">PHASE 02 / WELL PLANNING</span>
-              <h3 className="triad-card-title">Trajectory & Offset Hazards</h3>
+              <span className="triad-num">PHASE 02 / OFFSET INTELLIGENCE</span>
+              <h3 className="triad-card-title">Analogue Radar &amp; DDR Archive</h3>
               <p className="triad-card-desc">
-                Screens planned well paths against analogue well logs to identify and avoid hazard intervals.
+                Screens planned well depths against historical offset incident logs to identify and mitigate hazard intervals.
               </p>
               <div className="triad-pill-highlight">
                 <CheckCircle2 size={13} color="#8F7C3A" />
-                <span>3 Analogues Correlated (Volve Field)</span>
+                <span>28 Volve Wells Indexed</span>
               </div>
               <div className="triad-link">
-                <span>View Trajectory Risk</span>
+                <span>View Offset Similarity</span>
                 <ArrowRight size={14} />
               </div>
             </div>
@@ -98,22 +98,22 @@ export default function StreamlinedFeatures({ onOpenModal }) {
             <div 
               className="triad-card" 
               onClick={() => onOpenModal({
-                title: "Phase 3: Live Telemetry & Institutional Memory",
-                subtitle: "What is happening now & what did we learn? — WITSML Replay",
-                content: "Simulates high-frequency WITSML surface sensor streams (ROP 12.4 m/h, Bit Depth 1,842m, Torque 24.2 kN·m, SPP 8,200 kPa).\n\n• Live Alert: Potential mud loss approaching 58m ahead calibrated against DDR #43 in offset well 15/9-19 A.\n• Memory Loop: Validated post-well drilling events are fed directly back into institutional memory for future wells."
+                title: "Phase 3: Telemetry Replay & Drilling Parameter Monitor",
+                subtitle: "What is happening now? — WITSML Telemetry Replay",
+                content: "Replays standardized WITSML surface sensor streams (ROP 18 m/h, Bit Depth 2,145m, Torque 8.4 kN·m, SPP 14,150 kPa).\n\n• Anomaly Alert: Torque micro-spikes and deceleration matching pre-sticking signature in offset well 15/9-19 A [DDR Day 43 at 2,162m MD].\n• Actionable Guidance: Elevate pump rate to clear cuttings and maintain string rotation."
               })}
             >
               <div className="triad-icon-box">
                 <Activity size={24} color="#8F7C3A" />
               </div>
-              <span className="triad-num">PHASE 03 / DRILLING & MEMORY</span>
-              <h3 className="triad-card-title">Live Telemetry & Knowledge Loop</h3>
+              <span className="triad-num">PHASE 03 / DRILLING MONITOR</span>
+              <h3 className="triad-card-title">WITSML Telemetry Replay</h3>
               <p className="triad-card-desc">
-                Replays standardized WITSML sensor streams with depth-synchronized alerts.
+                Replays drilling telemetry with depth-synchronized hazard alerts grounded in historical DDR records.
               </p>
               <div className="triad-pill-highlight">
                 <CheckCircle2 size={13} color="#8F7C3A" />
-                <span>WITSML Replay + Institutional Loop</span>
+                <span>WITSML Replay + Historical DDR Records</span>
               </div>
               <div className="triad-link">
                 <span>Launch Telemetry Replay</span>
